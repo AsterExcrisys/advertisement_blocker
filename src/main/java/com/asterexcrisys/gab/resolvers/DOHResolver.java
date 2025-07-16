@@ -1,6 +1,6 @@
-package com.asterexcrisys.aab.resolvers;
+package com.asterexcrisys.gab.resolvers;
 
-import com.asterexcrisys.aab.utility.Utility;
+import com.asterexcrisys.gab.utility.Utility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;

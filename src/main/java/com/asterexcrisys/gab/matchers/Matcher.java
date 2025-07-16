@@ -1,4 +1,4 @@
-package com.asterexcrisys.aab.matchers;
+package com.asterexcrisys.gab.matchers;
 
 public sealed interface Matcher permits ExactMatcher, WildcardMatcher {
 

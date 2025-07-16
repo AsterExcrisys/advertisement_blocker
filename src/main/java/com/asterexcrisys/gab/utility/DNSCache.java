@@ -1,4 +1,4 @@
-package com.asterexcrisys.aab.utility;
+package com.asterexcrisys.gab.utility;
 
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;

@@ -1,9 +1,9 @@
-package com.asterexcrisys.aab.filters;
+package com.asterexcrisys.gab.filters;
 
-import com.asterexcrisys.aab.matchers.ExactMatcher;
-import com.asterexcrisys.aab.matchers.Matcher;
-import com.asterexcrisys.aab.matchers.WildcardMatcher;
-import java.util.List;
+import com.asterexcrisys.gab.matchers.ExactMatcher;
+import com.asterexcrisys.gab.matchers.Matcher;
+import com.asterexcrisys.gab.matchers.WildcardMatcher;
+import java.util.Collection;
 import java.util.Objects;
 
 public final class WhitelistFilter implements Filter {
@@ -35,7 +35,7 @@ public final class WhitelistFilter implements Filter {
     }
 
     @Override
-    public void load(List<String> domains) {
+    public void load(Collection<String> domains) {
         if (domains == null || domains.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException();
         }
@@ -61,7 +61,22 @@ public final class WhitelistFilter implements Filter {
     }
 
     @Override
-    public void unload() {
+    public void unload(Collection<String> domains) {
+        if (domains == null || domains.stream().allMatch(Objects::isNull)) {
+            return;
+        }
+        switch (matcher) {
+            case ExactMatcher exact -> exact.list().removeAll(domains);
+            case WildcardMatcher wildcard -> {
+                for (String domain : domains) {
+                    wildcard.list().remove(domain, "\\.");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void clear() {
         switch (matcher) {
             case ExactMatcher exact -> exact.list().clear();
             case WildcardMatcher wildcard -> wildcard.list().clear();

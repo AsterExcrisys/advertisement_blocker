@@ -1,6 +1,6 @@
-package com.asterexcrisys.aab.matchers;
+package com.asterexcrisys.gab.matchers;
 
-import com.asterexcrisys.aab.utility.Trie;
+import com.asterexcrisys.gab.utility.Trie;
 
 public final class WildcardMatcher implements Matcher {
 

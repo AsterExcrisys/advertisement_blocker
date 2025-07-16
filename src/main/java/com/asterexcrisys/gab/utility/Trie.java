@@ -1,7 +1,8 @@
-package com.asterexcrisys.aab.utility;
+package com.asterexcrisys.gab.utility;
 
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class Trie {
@@ -9,7 +10,7 @@ public class Trie {
     private final TrieNode root;
 
     public Trie(String prefix) {
-        root = new TrieNode(Objects.requireNonNull(prefix), new HashMap<>());
+        root = TrieNode.of(Objects.requireNonNull(prefix), new HashMap<>());
     }
 
     public boolean has(String word, String separator) {
@@ -34,7 +35,7 @@ public class Trie {
         String[] parts = word.split(separator);
         TrieNode current = root;
         for (String part : parts) {
-            current.children().putIfAbsent(part, new TrieNode(part, new HashMap<>()));
+            current.children().putIfAbsent(part, TrieNode.of(part, new HashMap<>()));
             current = current.children().get(part);
         }
     }
@@ -70,11 +71,15 @@ public class Trie {
 
 }
 
-record TrieNode(String label, HashMap<String, TrieNode> children) implements Comparable<TrieNode> {
+record TrieNode(String label, Map<String, TrieNode> children) implements Comparable<TrieNode> {
 
     @Override
     public int compareTo(@NotNull TrieNode other) {
         return label.compareTo(other.label);
+    }
+
+    public static TrieNode of(String label, Map<String, TrieNode> children) {
+        return new TrieNode(label, children);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.asterexcrisys.aab.resolvers;
+package com.asterexcrisys.gab.resolvers;
 
 import org.xbill.DNS.Message;
 

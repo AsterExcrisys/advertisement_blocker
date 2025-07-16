@@ -1,7 +1,7 @@
-package com.asterexcrisys.aab.filters;
+package com.asterexcrisys.gab.filters;
 
-import com.asterexcrisys.aab.matchers.Matcher;
-import java.util.List;
+import com.asterexcrisys.gab.matchers.Matcher;
+import java.util.Collection;
 
 public sealed interface Filter permits WhitelistFilter, BlacklistFilter {
 
@@ -9,11 +9,13 @@ public sealed interface Filter permits WhitelistFilter, BlacklistFilter {
 
     void load(String domain);
 
-    void load(List<String> domains);
+    void load(Collection<String> domains);
 
     void unload(String domain);
 
-    void unload();
+    void unload(Collection<String> domains);
+
+    void clear();
 
     boolean isAllowed(String domain);
 

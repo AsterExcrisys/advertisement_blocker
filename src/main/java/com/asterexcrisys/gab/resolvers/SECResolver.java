@@ -1,6 +1,6 @@
-package com.asterexcrisys.aab.resolvers;
+package com.asterexcrisys.gab.resolvers;
 
-import com.asterexcrisys.aab.utility.Utility;
+import com.asterexcrisys.gab.utility.Utility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;

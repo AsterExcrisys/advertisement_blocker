@@ -1,18 +1,15 @@
-package com.asterexcrisys.aab;
+package com.asterexcrisys.gab;
 
-import com.asterexcrisys.aab.filters.BlacklistFilter;
-import com.asterexcrisys.aab.filters.Filter;
-import com.asterexcrisys.aab.matchers.Matcher;
-import com.asterexcrisys.aab.resolvers.Resolver;
-import com.asterexcrisys.aab.utility.DNSCache;
-import com.asterexcrisys.aab.utility.Utility;
+import com.asterexcrisys.gab.filters.BlacklistFilter;
+import com.asterexcrisys.gab.filters.Filter;
+import com.asterexcrisys.gab.matchers.Matcher;
+import com.asterexcrisys.gab.resolvers.Resolver;
+import com.asterexcrisys.gab.utility.DNSCache;
+import com.asterexcrisys.gab.utility.Utility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class ProxyManager {
 
@@ -33,11 +30,29 @@ public class ProxyManager {
         resolvers.add(resolver);
     }
 
+    public void addResolvers(Collection<Resolver> resolvers) {
+        if (resolvers == null || resolvers.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException();
+        }
+        this.resolvers.addAll(resolvers);
+    }
+
     public void removeResolver(Resolver resolver) {
         if (resolver == null) {
             return;
         }
         resolvers.remove(resolver);
+    }
+
+    public void removeResolvers(Collection<Resolver> resolvers) {
+        if (resolvers == null || resolvers.stream().allMatch(Objects::isNull)) {
+            return;
+        }
+        this.resolvers.removeAll(resolvers);
+    }
+
+    public void clearResolvers() {
+        resolvers.clear();
     }
 
     public int getCacheMaximumSize() {
@@ -60,8 +75,20 @@ public class ProxyManager {
         filter.load(domain);
     }
 
+    public void addFilterDomains(Collection<String> domains) {
+        filter.load(domains);
+    }
+
     public void removeFilterDomain(String domain) {
         filter.unload(domain);
+    }
+
+    public void removeFilterDomains(Collection<String> domains) {
+        filter.unload(domains);
+    }
+
+    public void clearFilterDomains() {
+        filter.clear();
     }
 
     public Message handle(Message request) {
