@@ -1,0 +1,22 @@
+package com.asterexcrisys.aab.matchers;
+
+import com.asterexcrisys.aab.utility.Trie;
+
+public final class WildcardMatcher implements Matcher {
+
+    private final Trie list;
+
+    public WildcardMatcher() {
+        list = new Trie("www");
+    }
+
+    public Trie list() {
+        return list;
+    }
+
+    @Override
+    public boolean matches(String domain) {
+        return list.has(domain, "\\.");
+    }
+
+}
