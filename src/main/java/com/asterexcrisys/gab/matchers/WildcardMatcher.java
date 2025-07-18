@@ -2,6 +2,7 @@ package com.asterexcrisys.gab.matchers;
 
 import com.asterexcrisys.gab.utility.Trie;
 
+@SuppressWarnings("unused")
 public final class WildcardMatcher implements Matcher {
 
     private final Trie list;

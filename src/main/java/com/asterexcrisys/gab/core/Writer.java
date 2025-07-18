@@ -1,9 +1,12 @@
+package com.asterexcrisys.gab.core;
+
 import com.asterexcrisys.gab.utility.UDPPacket;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+@SuppressWarnings("unused")
 public class Writer extends Thread {
 
     private final DatagramSocket socket;

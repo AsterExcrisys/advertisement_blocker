@@ -5,6 +5,7 @@ import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public record STDResolver(String nameServer) implements Resolver {
 
     public STDResolver {

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public final class DOHResolver implements Resolver, AutoCloseable {
 
     private static final MediaType MEDIA_TYPE = MediaType.get("application/dns-message");

@@ -6,6 +6,7 @@ import com.asterexcrisys.gab.matchers.WildcardMatcher;
 import java.util.Collection;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public final class WhitelistFilter implements Filter {
 
     private Matcher matcher;

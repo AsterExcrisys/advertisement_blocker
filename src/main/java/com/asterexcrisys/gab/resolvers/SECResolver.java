@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public record SECResolver(String trustAnchor, String nameServer) implements Resolver {
 
     public SECResolver {

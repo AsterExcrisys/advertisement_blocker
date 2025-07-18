@@ -4,6 +4,7 @@ import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import java.util.Optional;
 
+@SuppressWarnings("unused")
 public class DNSCache {
 
     private final Cache cache;

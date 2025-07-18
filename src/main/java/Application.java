@@ -1,4 +1,7 @@
+import com.asterexcrisys.gab.core.Handler;
 import com.asterexcrisys.gab.ProxyManager;
+import com.asterexcrisys.gab.core.Reader;
+import com.asterexcrisys.gab.core.Writer;
 import com.asterexcrisys.gab.resolvers.STDResolver;
 import com.asterexcrisys.gab.utility.UDPPacket;
 import java.net.DatagramSocket;
@@ -7,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@SuppressWarnings("unused")
 public class Application {
 
     private static final int SERVER_PORT = 53;

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
+@SuppressWarnings("unused")
 public final class Utility {
 
     public static <T> T synchronizeAccess(Object lock, Supplier<T> supplier) {

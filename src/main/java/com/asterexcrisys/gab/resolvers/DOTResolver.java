@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public final class DOTResolver implements Resolver {
 
     private final String nameServer;

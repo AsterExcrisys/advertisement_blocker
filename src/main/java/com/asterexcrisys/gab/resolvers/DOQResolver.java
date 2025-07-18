@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public record DOQResolver(String nameServer) implements Resolver {
 
     private static final String APPLICATION_PROTOCOL = "doq";

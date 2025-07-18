@@ -3,6 +3,7 @@ package com.asterexcrisys.gab.matchers;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("unused")
 public final class ExactMatcher implements Matcher {
 
     private final Set<String> list;

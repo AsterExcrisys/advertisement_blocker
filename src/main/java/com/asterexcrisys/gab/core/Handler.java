@@ -1,3 +1,5 @@
+package com.asterexcrisys.gab.core;
+
 import com.asterexcrisys.gab.ProxyManager;
 import com.asterexcrisys.gab.utility.UDPPacket;
 import com.asterexcrisys.gab.utility.Utility;
@@ -5,6 +7,7 @@ import org.xbill.DNS.Message;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+@SuppressWarnings("unused")
 public class Handler extends Thread {
 
     private final ProxyManager manager;

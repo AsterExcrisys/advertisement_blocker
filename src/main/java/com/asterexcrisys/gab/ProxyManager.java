@@ -11,6 +11,7 @@ import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class ProxyManager {
 
     private final Set<Resolver> resolvers;
