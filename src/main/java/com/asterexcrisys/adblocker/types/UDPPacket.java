@@ -1,4 +1,4 @@
-package com.asterexcrisys.gab.utility;
+package com.asterexcrisys.adblocker.types;
 
 import java.net.InetAddress;
 

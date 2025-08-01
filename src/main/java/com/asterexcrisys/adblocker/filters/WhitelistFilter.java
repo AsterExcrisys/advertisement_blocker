@@ -1,21 +1,21 @@
-package com.asterexcrisys.gab.filters;
+package com.asterexcrisys.adblocker.filters;
 
-import com.asterexcrisys.gab.matchers.ExactMatcher;
-import com.asterexcrisys.gab.matchers.Matcher;
-import com.asterexcrisys.gab.matchers.WildcardMatcher;
+import com.asterexcrisys.adblocker.matchers.ExactMatcher;
+import com.asterexcrisys.adblocker.matchers.Matcher;
+import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import java.util.Collection;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public final class BlacklistFilter implements Filter {
+public final class WhitelistFilter implements Filter {
 
     private Matcher matcher;
 
-    public BlacklistFilter() {
+    public WhitelistFilter() {
         matcher = new ExactMatcher();
     }
 
-    public BlacklistFilter(Matcher matcher) {
+    public WhitelistFilter(Matcher matcher) {
         this.matcher = Objects.requireNonNull(matcher);
     }
 
@@ -86,7 +86,7 @@ public final class BlacklistFilter implements Filter {
 
     @Override
     public boolean isAllowed(String domain) {
-        return !matcher.matches(domain);
+        return matcher.matches(domain);
     }
 
 }

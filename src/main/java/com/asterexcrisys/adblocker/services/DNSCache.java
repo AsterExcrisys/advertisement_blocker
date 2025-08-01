@@ -1,4 +1,4 @@
-package com.asterexcrisys.gab.utility;
+package com.asterexcrisys.adblocker.services;
 
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;

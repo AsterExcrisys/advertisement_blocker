@@ -1,11 +1,10 @@
-package com.asterexcrisys.gab;
+package com.asterexcrisys.adblocker.services;
 
-import com.asterexcrisys.gab.filters.BlacklistFilter;
-import com.asterexcrisys.gab.filters.Filter;
-import com.asterexcrisys.gab.matchers.Matcher;
-import com.asterexcrisys.gab.resolvers.Resolver;
-import com.asterexcrisys.gab.utility.DNSCache;
-import com.asterexcrisys.gab.utility.Utility;
+import com.asterexcrisys.adblocker.filters.BlacklistFilter;
+import com.asterexcrisys.adblocker.filters.Filter;
+import com.asterexcrisys.adblocker.matchers.Matcher;
+import com.asterexcrisys.adblocker.resolvers.Resolver;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
@@ -72,23 +71,23 @@ public class ProxyManager {
         filter.setMatcher(matcher);
     }
 
-    public void addFilterDomain(String domain) {
+    public void addFilteredDomain(String domain) {
         filter.load(domain);
     }
 
-    public void addFilterDomains(Collection<String> domains) {
+    public void addFilteredDomains(Collection<String> domains) {
         filter.load(domains);
     }
 
-    public void removeFilterDomain(String domain) {
+    public void removeFilteredDomain(String domain) {
         filter.unload(domain);
     }
 
-    public void removeFilterDomains(Collection<String> domains) {
+    public void removeFilteredDomains(Collection<String> domains) {
         filter.unload(domains);
     }
 
-    public void clearFilterDomains() {
+    public void clearFilteredDomains() {
         filter.clear();
     }
 
@@ -104,13 +103,13 @@ public class ProxyManager {
                 cache.put(response);
             }
         } else {
-            response = Utility.buildErrorResponse(request, 15, 15, "Blocked by proxy policy");
+            response = GlobalUtility.buildErrorResponse(request, 15, 15, "Blocked by proxy policy");
         }
         return response;
     }
 
     private Message resolve(Message request) {
-        Message response = Utility.buildErrorResponse(
+        Message response = GlobalUtility.buildErrorResponse(
                 request,
                 15,
                 15,

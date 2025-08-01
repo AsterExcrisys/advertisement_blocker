@@ -1,14 +1,18 @@
-package com.asterexcrisys.gab.resolvers;
+package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.gab.utility.Utility;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
+import org.xbill.DNS.dnssec.ValidatingResolver;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public record STDResolver(String nameServer) implements Resolver {
+public record SECResolver(String trustAnchor, String nameServer) implements Resolver {
 
-    public STDResolver {
+    public SECResolver {
+        Objects.requireNonNull(trustAnchor);
         Objects.requireNonNull(nameServer);
     }
 
@@ -27,7 +31,9 @@ public record STDResolver(String nameServer) implements Resolver {
                     question.getType(),
                     question.getDClass()
             );
-            lookup.setResolver(new SimpleResolver(nameServer));
+            ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
+            resolver.loadTrustAnchors(new ByteArrayInputStream(trustAnchor.getBytes(StandardCharsets.UTF_8)));
+            lookup.setResolver(resolver);
             Record[] records = lookup.run();
             if (lookup.getResult() == Lookup.SUCCESSFUL && records != null) {
                 for (Record record : records) {
@@ -38,7 +44,7 @@ public record STDResolver(String nameServer) implements Resolver {
             }
             return response;
         } catch (Exception e) {
-            return Utility.buildErrorResponse(
+            return GlobalUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,

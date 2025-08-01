@@ -1,4 +1,4 @@
-package com.asterexcrisys.gab.resolvers;
+package com.asterexcrisys.adblocker.resolvers;
 
 import org.xbill.DNS.Message;
 

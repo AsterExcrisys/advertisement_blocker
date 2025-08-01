@@ -1,8 +1,8 @@
-package com.asterexcrisys.gab.core;
+package com.asterexcrisys.adblocker.threads;
 
-import com.asterexcrisys.gab.ProxyManager;
-import com.asterexcrisys.gab.utility.UDPPacket;
-import com.asterexcrisys.gab.utility.Utility;
+import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.types.UDPPacket;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.xbill.DNS.Message;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -24,12 +24,9 @@ public class Handler extends Thread {
     public void run() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                UDPPacket requestPacket = requests.poll();
-                if (requestPacket == null) {
-                    continue;
-                }
+                UDPPacket requestPacket = requests.take();
                 Message request = new Message(requestPacket.data());
-                Message response = Utility.synchronizeAccess(manager, () -> {
+                Message response = GlobalUtility.synchronizeAccess(manager, () -> {
                     return manager.handle(request);
                 });
                 UDPPacket responsePacket = UDPPacket.of(

@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.resolvers;
+package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.gab.utility.Utility;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import javax.net.ssl.SSLSocketFactory;
@@ -50,7 +50,7 @@ public final class DOTResolver implements Resolver {
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
         } catch (Exception e) {
-            return Utility.buildErrorResponse(
+            return GlobalUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,

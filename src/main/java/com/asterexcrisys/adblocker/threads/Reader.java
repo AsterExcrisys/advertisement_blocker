@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.core;
+package com.asterexcrisys.adblocker.threads;
 
-import com.asterexcrisys.gab.utility.UDPPacket;
+import com.asterexcrisys.adblocker.types.UDPPacket;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Arrays;

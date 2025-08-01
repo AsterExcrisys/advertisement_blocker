@@ -1,0 +1,5 @@
+google.com
+amazon.com
+youtube.com
+apple.com
+netflix.com

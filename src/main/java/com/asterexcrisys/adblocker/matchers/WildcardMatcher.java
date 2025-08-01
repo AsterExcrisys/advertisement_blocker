@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.matchers;
+package com.asterexcrisys.adblocker.matchers;
 
-import com.asterexcrisys.gab.utility.Trie;
+import com.asterexcrisys.adblocker.types.Trie;
 
 @SuppressWarnings("unused")
 public final class WildcardMatcher implements Matcher {

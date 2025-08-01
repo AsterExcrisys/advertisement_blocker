@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.filters;
+package com.asterexcrisys.adblocker.filters;
 
-import com.asterexcrisys.gab.matchers.Matcher;
+import com.asterexcrisys.adblocker.matchers.Matcher;
 import java.util.Collection;
 
 @SuppressWarnings("unused")

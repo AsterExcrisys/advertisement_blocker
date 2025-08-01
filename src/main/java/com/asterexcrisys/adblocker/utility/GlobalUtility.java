@@ -1,17 +1,27 @@
-package com.asterexcrisys.gab.utility;
+package com.asterexcrisys.adblocker.utility;
 
 import org.xbill.DNS.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
-public final class Utility {
+public final class GlobalUtility {
 
     public static <T> T synchronizeAccess(Object lock, Supplier<T> supplier) {
         synchronized (lock) {
             return supplier.get();
         }
+    }
+
+    public static <T> List<T> fillList(Supplier<T> supplier, int size) {
+        List<T> list = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            list.add(supplier.get());
+        }
+        return list;
     }
 
     public static Message buildErrorResponse(Message request, int statusCode, int optionCode, String optionMessage) {

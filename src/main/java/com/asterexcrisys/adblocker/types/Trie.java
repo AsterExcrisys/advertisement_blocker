@@ -1,4 +1,4 @@
-package com.asterexcrisys.gab.utility;
+package com.asterexcrisys.adblocker.types;
 
 import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;

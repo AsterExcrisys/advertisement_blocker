@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.resolvers;
+package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.gab.utility.Utility;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
@@ -70,7 +70,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 return new Message(httpResponse.body().bytes());
             }
         } catch (Exception e) {
-            return Utility.buildErrorResponse(
+            return GlobalUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,

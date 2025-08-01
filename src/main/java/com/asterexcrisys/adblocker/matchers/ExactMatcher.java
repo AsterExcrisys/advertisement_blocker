@@ -1,4 +1,4 @@
-package com.asterexcrisys.gab.matchers;
+package com.asterexcrisys.adblocker.matchers;
 
 import java.util.HashSet;
 import java.util.Set;

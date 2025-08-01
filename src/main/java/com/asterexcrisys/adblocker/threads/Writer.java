@@ -1,6 +1,6 @@
-package com.asterexcrisys.gab.core;
+package com.asterexcrisys.adblocker.threads;
 
-import com.asterexcrisys.gab.utility.UDPPacket;
+import com.asterexcrisys.adblocker.types.UDPPacket;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Objects;
@@ -21,10 +21,7 @@ public class Writer extends Thread {
     public void run() {
         try {
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
-                UDPPacket responsePacket = responses.poll();
-                if (responsePacket == null) {
-                    continue;
-                }
+                UDPPacket responsePacket = responses.take();
                 DatagramPacket packet = new DatagramPacket(
                         responsePacket.data(),
                         responsePacket.data().length,
