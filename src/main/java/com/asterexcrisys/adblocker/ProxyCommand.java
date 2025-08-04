@@ -11,6 +11,7 @@ import com.asterexcrisys.adblocker.threads.Writer;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -19,11 +20,12 @@ import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @SuppressWarnings("unused")
 @Command(name = "proxy", mixinStandardHelpOptions = true, version = "1.0.0", description = "Starts a DNS Ad-Blocking Proxy with the given, or otherwise default (if applicable), parameters.")
-public class ProxyCommand implements Runnable {
+public class ProxyCommand implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The path to the file containing a list of DNS name servers (resolvers) (one per line).", arity = "1")
     private File nameServers;
@@ -53,7 +55,7 @@ public class ProxyCommand implements Runnable {
     private int maximumThreads;
 
     @Override
-    public void run() {
+    public Integer call() throws Exception {
         if (!nameServers.exists() || !nameServers.isFile()) {
             throw new IllegalArgumentException("name servers must be a file");
         }
@@ -101,7 +103,7 @@ public class ProxyCommand implements Runnable {
                 handler.setDaemon(true);
                 handler.start();
             }
-            System.out.println("DNS Ad-Blocking Proxy started on port: " + serverPort);
+            System.out.printf("Information: DNS Ad-Blocking Proxy started on port %s\n", serverPort);
             while (!Thread.currentThread().isInterrupted()) {
                 if (requests.size() < handlers.size() * (requestsLimit - 10)) {
                     if (handlers.size() == minimumThreads) {
@@ -109,7 +111,7 @@ public class ProxyCommand implements Runnable {
                     }
                     handlers.getLast().interrupt();
                     handlers.removeLast();
-                    System.err.println("The last handler thread dispatch was reverted");
+                    System.out.println("Information: the last handler thread dispatch was reverted");
                     continue;
                 }
                 if (requests.size() > (handlers.size() + 1) * (requestsLimit + 10)) {
@@ -119,12 +121,12 @@ public class ProxyCommand implements Runnable {
                     handlers.add(new Handler(manager, requests, responses));
                     handlers.getLast().setDaemon(true);
                     handlers.getLast().start();
-                    System.err.println("A new handler thread was dispatched");
+                    System.out.println("Information: a new handler thread was dispatched");
                 }
-                Thread.sleep(1000);
+                Thread.sleep(10000);
             }
-        } catch (Exception e) {
-            System.out.println("Exception caught: " + e.getMessage());
+            return ExitCode.OK;
+        } finally {
             Thread.currentThread().interrupt();
         }
     }

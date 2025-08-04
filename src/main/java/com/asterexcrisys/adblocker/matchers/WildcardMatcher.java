@@ -8,7 +8,7 @@ public final class WildcardMatcher implements Matcher {
     private final Trie list;
 
     public WildcardMatcher() {
-        list = new Trie("www");
+        list = new Trie("www", "*");
     }
 
     public Trie list() {

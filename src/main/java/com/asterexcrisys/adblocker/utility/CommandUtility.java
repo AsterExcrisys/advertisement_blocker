@@ -11,23 +11,23 @@ public final class CommandUtility {
 
     public static List<Resolver> parseNameServers(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-            List<Resolver> lines = new ArrayList<>();
+            List<Resolver> nameServers = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                lines.add(new STDResolver(line));
+                nameServers.add(new STDResolver(line));
             }
-            return lines;
+            return nameServers;
         }
     }
 
     public static List<String> parseFilteredDomains(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-            List<String> lines = new ArrayList<>();
+            List<String> filteredDomains = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                lines.add(line);
+                filteredDomains.add(line);
             }
-            return lines;
+            return filteredDomains;
         }
     }
 

@@ -30,8 +30,8 @@ public class Writer extends Thread {
                 );
                 socket.send(packet);
             }
-        } catch (Exception e) {
-            System.out.println("Exception caught while writing: " + e.getMessage());
+        } catch (Exception exception) {
+            System.err.printf("Error: %s\n", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

@@ -35,13 +35,13 @@ public class Handler extends Thread {
                         response.toWire()
                 );
                 if (responses.offer(responsePacket)) {
-                    System.out.println("Succeeded to send response");
+                    System.out.printf("Information: succeeded to send response to %s:%s\n", requestPacket.address(), requestPacket.port());
                 } else {
-                    System.out.println("Failed to send response");
+                    System.out.printf("Warning: failed to send response to %s:%s\n", requestPacket.address(), requestPacket.port());
                 }
             }
-        } catch (Exception e) {
-            System.out.println("Exception caught while handling: " + e.getMessage());
+        } catch (Exception exception) {
+            System.err.printf("Error: %s\n", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

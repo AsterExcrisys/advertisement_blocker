@@ -31,13 +31,13 @@ public class Reader extends Thread {
                         Arrays.copyOf(packet.getData(), packet.getLength())
                 );
                 if (requests.offer(requestPacket)) {
-                    System.out.println("Succeeded to receive request");
+                    System.out.printf("Information: succeeded to receive request from %s:%s\n", requestPacket.address(), requestPacket.port());
                 } else {
-                    System.out.println("Failed to receive request");
+                    System.out.printf("Warning: failed to receive request from %s:%s\n", requestPacket.address(), requestPacket.port());
                 }
             }
-        } catch (Exception e) {
-            System.out.println("Exception caught while reading: " + e.getMessage());
+        } catch (Exception exception) {
+            System.err.printf("Error: %s\n", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }
