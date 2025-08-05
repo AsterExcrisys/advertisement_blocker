@@ -1,5 +1,6 @@
 package com.asterexcrisys.adblocker.services;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.IParameterExceptionHandler;
@@ -8,7 +9,7 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.IExecutionExceptionHandler;
 
 @SuppressWarnings("unused")
-public class ExceptionHandler implements IParameterExceptionHandler, IExecutionExceptionHandler {
+public class ExceptionHandler implements IParameterExceptionHandler, IExecutionExceptionHandler, UncaughtExceptionHandler {
 
     @Override
     public int handleParseException(ParameterException exception, String[] arguments) {
@@ -20,6 +21,11 @@ public class ExceptionHandler implements IParameterExceptionHandler, IExecutionE
     public int handleExecutionException(Exception exception, CommandLine command, ParseResult result) {
         System.err.printf("Error: %s\n", exception.getMessage());
         return exception instanceof IllegalArgumentException? ExitCode.USAGE:ExitCode.SOFTWARE;
+    }
+
+    @Override
+    public void uncaughtException(Thread thread, Throwable exception) {
+        System.err.printf("Error: %s\n", exception.getMessage());
     }
 
 }

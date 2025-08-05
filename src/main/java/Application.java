@@ -9,6 +9,7 @@ public class Application {
         CommandLine command = new CommandLine(new ProxyCommand());
         command.setParameterExceptionHandler(new ExceptionHandler());
         command.setExecutionExceptionHandler(new ExceptionHandler());
+        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
         System.exit(command.execute(arguments));
     }
 

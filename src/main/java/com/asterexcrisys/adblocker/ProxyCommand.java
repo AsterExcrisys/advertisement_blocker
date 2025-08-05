@@ -105,6 +105,7 @@ public class ProxyCommand implements Callable<Integer> {
             }
             System.out.printf("Information: DNS Ad-Blocking Proxy started on port %s\n", serverPort);
             while (!Thread.currentThread().isInterrupted()) {
+                Thread.sleep(10000);
                 if (requests.size() < handlers.size() * (requestsLimit - 10)) {
                     if (handlers.size() == minimumThreads) {
                         continue;
@@ -123,7 +124,6 @@ public class ProxyCommand implements Callable<Integer> {
                     handlers.getLast().start();
                     System.out.println("Information: a new handler thread was dispatched");
                 }
-                Thread.sleep(10000);
             }
             return ExitCode.OK;
         } finally {
