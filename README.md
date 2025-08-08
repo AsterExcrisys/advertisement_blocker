@@ -6,9 +6,9 @@ A simple, configurable DNS proxy server written in Java that blocks known ad-ser
 
 * ✅ Intercepts and handles DNS requests (must be set as the upstream resolver)
 * 🚫 Blocks known ad and tracking domains
-* 📝 Supports custom blocklists
+* 📝 Supports both blacklists and whitelists with exact or wildcard matchers
 * 💾 Lightweight, few external dependencies
-* 🔧 Configurable via properties file or CLI arguments
+* 🔧 Configurable via CLI arguments (uses TXT files for name servers and filtered domains)
 * 📄 Logs DNS queries and blocked domains
 
 ## 📦 How It Works
