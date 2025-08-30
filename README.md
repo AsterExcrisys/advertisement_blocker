@@ -52,22 +52,23 @@ java -jar advertisement_blocker.jar
 You can also specify options:
 
 ```bash
-java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtered/domains.txt --server-port=5353
+java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtered/domains.txt --server-port=53000
 ```
 
 ### Configuration Options
 
-| **Index/Option**             | **Name(s)**                      | **Description**                                                                         | **Default** |
-|------------------------------|----------------------------------|-----------------------------------------------------------------------------------------|-------------|
-| `0`                          | *nameServers*                    | The path to the file containing a list of DNS name servers (resolvers), one per line.   | *Required*  |
-| `1`                          | *filteredDomains*                | The path to the file containing a list of filtered domains, one per line.               | *Required*  |
-| `-wl`, `--is-whitelist`      | *isWhitelist*                    | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).        | `false`     |
-| `-wc`, `--is-wildcard`       | *isWildcard*                     | Flag to indicate if the proxy should use **wildcard** matching.                         | `false`     |
-| `-p`, `--server-port`        | *serverPort*                     | The port on which the server will listen for requests.                                  | `53`        |
-| `-c`, `--cache-limit`        | *cacheLimit*                     | Maximum number of DNS responses stored in the cache.                                    | `1000`      |
-| `-r`, `--requests-limit`     | *requestsLimit*                  | Max number of requests each handler thread should process.                              | `100`       |
-| `-min`, `--minimum-threads`  | *minimumThreads*                 | Minimum number of handler threads maintained at all times.                              | `1`         |
-| `-max`, `--maximum-threads`  | *maximumThreads*                 | Maximum number of handler threads that can exist.                                       | `10`        |
+| **Index/Option**            | **Name(s)**       | **Description**                                                                       | **Default** |
+|-----------------------------|-------------------|---------------------------------------------------------------------------------------|-------------|
+| `0`                         | *nameServers*     | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
+| `1`                         | *filteredDomains* | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
+| `-wl`, `--is-whitelist`     | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
+| `-wc`, `--is-wildcard`      | *isWildcard*      | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
+| `-sp`, `--server-port`      | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
+| `-cl`, `--cache-limit`      | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
+| `-rt`, `--request-timeout`  | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
+| `-rl`, `--requests-limit`   | *requestsLimit*   | Maximum number of requests each handler thread should process.                        | `100`       |
+| `-min`, `--minimum-threads` | *minimumThreads*  | Minimum number of handler threads maintained at all times.                            | `1`         |
+| `-max`, `--maximum-threads` | *maximumThreads*  | Maximum number of handler threads that can exist.                                     | `10`        |
 
 ## 📄 Name Servers Format
 
@@ -95,7 +96,7 @@ doubleclick.net
 You can test it using `dig`:
 
 ```bash
-dig @localhost -p 5353 example.com
+dig @localhost -p 53000 example.com
 ```
 
 If blocked, you'll get a `BLOCKED` response.
