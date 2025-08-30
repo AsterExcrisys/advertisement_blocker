@@ -4,7 +4,7 @@ import com.asterexcrisys.adblocker.filters.BlacklistFilter;
 import com.asterexcrisys.adblocker.filters.Filter;
 import com.asterexcrisys.adblocker.matchers.Matcher;
 import com.asterexcrisys.adblocker.resolvers.Resolver;
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
@@ -103,13 +103,13 @@ public class ProxyManager {
                 cache.put(response);
             }
         } else {
-            response = GlobalUtility.buildErrorResponse(request, 15, 15, "Blocked by proxy policy");
+            response = DNSUtility.buildErrorResponse(request, 15, 15, "Blocked by proxy policy");
         }
         return response;
     }
 
     private Message resolve(Message request) {
-        Message response = GlobalUtility.buildErrorResponse(
+        Message response = DNSUtility.buildErrorResponse(
                 request,
                 15,
                 15,

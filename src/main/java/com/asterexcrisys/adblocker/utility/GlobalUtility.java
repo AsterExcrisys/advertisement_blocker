@@ -1,18 +1,39 @@
 package com.asterexcrisys.adblocker.utility;
 
-import org.xbill.DNS.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import com.asterexcrisys.adblocker.GlobalSettings;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public final class GlobalUtility {
 
-    public static <T> T synchronizeAccess(Object lock, Supplier<T> supplier) {
-        synchronized (lock) {
+    private static final GlobalSettings SETTINGS;
+
+    static {
+        SETTINGS = GlobalSettings.getInstance();
+    }
+
+    public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) {
+        lock.lock();
+        try {
             return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static <T> Optional<T> acquireAccessOrTimeout(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {
+        if (!lock.tryLock(SETTINGS.getRequestTimeout(), TimeUnit.MILLISECONDS)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(supplier.get());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -22,27 +43,6 @@ public final class GlobalUtility {
             list.add(supplier.get());
         }
         return list;
-    }
-
-    public static Message buildErrorResponse(Message request, int statusCode, int optionCode, String optionMessage) {
-        Message response = new Message(request.getHeader().getID());
-        response.getHeader().setFlag(Flags.QR);
-        response.getHeader().setRcode(statusCode);
-        OPTRecord record = new OPTRecord(
-                4096, 0, 0, 0,
-                new GenericEDNSOption(15, buildAdditionalData(optionCode, optionMessage))
-        );
-        response.addRecord(request.getQuestion(), Section.QUESTION);
-        response.addRecord(record, Section.ADDITIONAL);
-        return response;
-    }
-
-    private static byte[] buildAdditionalData(int code, String reason) {
-        byte[] data = new byte[2 + reason.getBytes().length];
-        ByteBuffer buffer = ByteBuffer.wrap(data);
-        buffer.putShort((short) code);
-        buffer.put(reason.getBytes(StandardCharsets.UTF_8));
-        return data;
     }
 
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
 @Command(name = "proxy", mixinStandardHelpOptions = true, version = "1.0.0", description = "Starts a DNS Ad-Blocking Proxy with the given, or otherwise default (if applicable), parameters.")
@@ -39,13 +40,16 @@ public class ProxyCommand implements Callable<Integer> {
     @Option(names = {"-wc", "--is-wildcard"}, description = "The flag to signal the proxy whether it should use an exact or a wildcard matcher (optional).", defaultValue = "false")
     private boolean isWildcard;
 
-    @Option(names = {"-p", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
+    @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
     private int serverPort;
 
-    @Option(names = {"-c", "--cache-limit"}, description = "The cache limit of the proxy for DNS responses (optional).", defaultValue = "1000")
+    @Option(names = {"-cl", "--cache-limit"}, description = "The cache limit of the proxy for DNS responses (optional).", defaultValue = "1000")
     private int cacheLimit;
 
-    @Option(names = {"-r", "--requests-limit"}, description = "The requests limit per handler threads (how many they should handle at maximum) (optional).", defaultValue = "100")
+    @Option(names = {"-rt", "--request-timeout"}, description = "The timeout in milliseconds for each incoming request (if it does expire, the request is rejected) (optional).", defaultValue = "5000")
+    private int requestTimeout;
+
+    @Option(names = {"-rl", "--requests-limit"}, description = "The requests limit per handler threads (how many they should handle at maximum) (optional).", defaultValue = "100")
     private int requestsLimit;
 
     @Option(names = {"-min", "--minimum-threads"}, description = "The minimum number of handler threads that exists at any given time (optional).", defaultValue = "1")
@@ -68,6 +72,9 @@ public class ProxyCommand implements Callable<Integer> {
         if (cacheLimit < 0 || cacheLimit > 10000) {
             throw new IllegalArgumentException("cache limit must be in the range [0, 10000]");
         }
+        if (requestTimeout < 1000 || requestTimeout > 5000) {
+            throw new IllegalArgumentException("requests limit must be in the range [1000, 5000]");
+        }
         if (requestsLimit < 1 || requestsLimit > 1000) {
             throw new IllegalArgumentException("requests limit must be in the range [1, 1000]");
         }
@@ -80,7 +87,9 @@ public class ProxyCommand implements Callable<Integer> {
         if (minimumThreads > maximumThreads) {
             throw new IllegalArgumentException("minimum threads must not exceed maximum threads");
         }
+        GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
         try (DatagramSocket socket = new DatagramSocket(serverPort)) {
+            ReentrantLock lock = new ReentrantLock();
             ProxyManager manager = new ProxyManager();
             manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
             manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
@@ -92,7 +101,7 @@ public class ProxyCommand implements Callable<Integer> {
             Thread reader = new Reader(socket, requests);
             Thread writer = new Writer(socket, responses);
             List<Thread> handlers = new ArrayList<>(GlobalUtility.fillList(
-                    () -> new Handler(manager, requests, responses),
+                    () -> new Handler(lock, manager, requests, responses),
                     minimumThreads
             ));
             reader.setDaemon(true);
@@ -119,7 +128,7 @@ public class ProxyCommand implements Callable<Integer> {
                     if (handlers.size() == maximumThreads) {
                         continue;
                     }
-                    handlers.add(new Handler(manager, requests, responses));
+                    handlers.add(new Handler(lock, manager, requests, responses));
                     handlers.getLast().setDaemon(true);
                     handlers.getLast().start();
                     System.out.println("Information: a new handler thread was dispatched");

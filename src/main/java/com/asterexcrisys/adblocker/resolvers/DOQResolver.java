@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import tech.kwik.core.QuicClientConnection;
@@ -38,12 +38,12 @@ public record DOQResolver(String nameServer) implements Resolver {
             output.flush();
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
-        } catch (Exception e) {
-            return GlobalUtility.buildErrorResponse(
+        } catch (Exception exception) {
+            return DNSUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,
-                    "Failed to resolve the DNS query: %s".formatted(e.getMessage())
+                    "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         } finally {
             if (connection != null) {

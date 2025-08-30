@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;
@@ -43,12 +43,12 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
                 response.getHeader().setRcode(lookup.getResult());
             }
             return response;
-        } catch (Exception e) {
-            return GlobalUtility.buildErrorResponse(
+        } catch (Exception exception) {
+            return DNSUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,
-                    "Failed to resolve the DNS query: %s".formatted(e.getMessage())
+                    "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }
     }

@@ -6,15 +6,18 @@ import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.xbill.DNS.Message;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
 public class Handler extends Thread {
 
+    private final ReentrantLock lock;
     private final ProxyManager manager;
     private final BlockingQueue<UDPPacket> requests;
     private final BlockingQueue<UDPPacket> responses;
 
-    public Handler(ProxyManager manager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
+    public Handler(ReentrantLock lock, ProxyManager manager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
+        this.lock = Objects.requireNonNull(lock);
         this.manager = Objects.requireNonNull(manager);
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
@@ -26,9 +29,7 @@ public class Handler extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 UDPPacket requestPacket = requests.take();
                 Message request = new Message(requestPacket.data());
-                Message response = GlobalUtility.synchronizeAccess(manager, () -> {
-                    return manager.handle(request);
-                });
+                Message response = GlobalUtility.acquireAccess(lock, () -> manager.handle(request));
                 UDPPacket responsePacket = UDPPacket.of(
                         requestPacket.address(),
                         requestPacket.port(),

@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.utility.DNSUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
@@ -69,12 +69,12 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 }
                 return new Message(httpResponse.body().bytes());
             }
-        } catch (Exception e) {
-            return GlobalUtility.buildErrorResponse(
+        } catch (Exception exception) {
+            return DNSUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,
-                    "Failed to resolve the DNS query: %s".formatted(e.getMessage())
+                    "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }
     }
