@@ -1,9 +1,0 @@
-| Component                 | Technology Suggestion             |
-| ------------------------- | --------------------------------- |
-| DNS parser/builder        | `dnsjava`                         |
-| DNS over HTTPS (DoH)      | Java HTTPS server + wire parser   |
-| DNS over TLS (DoT)        | Java TLS server or external proxy |
-| Filtering/blocking        | AdGuard-style filter parser       |
-| Upstream resolver support | `SimpleResolver` (dnsjava)        |
-| DNSSEC support (optional) | `dnsjava` + manual validation     |
-| Caching                   | Guava or Caffeine                 |
