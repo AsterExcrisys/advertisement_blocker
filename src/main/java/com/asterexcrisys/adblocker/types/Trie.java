@@ -1,6 +1,5 @@
 package com.asterexcrisys.adblocker.types;
 
-import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -99,7 +98,7 @@ public class Trie {
 record TrieNode(String label, Map<String, TrieNode> children) implements Comparable<TrieNode> {
 
     @Override
-    public int compareTo(@NotNull TrieNode other) {
+    public int compareTo(TrieNode other) {
         return label.compareTo(other.label);
     }
 

@@ -1,6 +1,8 @@
 package com.asterexcrisys.adblocker.threads;
 
 import com.asterexcrisys.adblocker.types.UDPPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Arrays;
@@ -9,6 +11,8 @@ import java.util.concurrent.BlockingQueue;
 
 @SuppressWarnings("unused")
 public class Reader extends Thread {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Reader.class);
 
     private final DatagramSocket socket;
     private final BlockingQueue<UDPPacket> requests;
@@ -31,13 +35,13 @@ public class Reader extends Thread {
                         Arrays.copyOf(packet.getData(), packet.getLength())
                 );
                 if (requests.offer(requestPacket)) {
-                    System.out.printf("Information: succeeded to receive request from %s:%s\n", requestPacket.address(), requestPacket.port());
+                    LOGGER.info("Succeeded to receive request from {}:{}", requestPacket.address(), requestPacket.port());
                 } else {
-                    System.out.printf("Warning: failed to receive request from %s:%s\n", requestPacket.address(), requestPacket.port());
+                    LOGGER.warn("Failed to receive request from {}:{}", requestPacket.address(), requestPacket.port());
                 }
             }
         } catch (Exception exception) {
-            System.err.printf("Error: %s\n", exception.getMessage());
+            LOGGER.error("Failed to read request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

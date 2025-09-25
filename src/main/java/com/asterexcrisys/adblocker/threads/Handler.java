@@ -3,6 +3,8 @@ package com.asterexcrisys.adblocker.threads;
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Message;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -10,6 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
 public class Handler extends Thread {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Handler.class);
 
     private final ReentrantLock lock;
     private final ProxyManager manager;
@@ -36,13 +40,13 @@ public class Handler extends Thread {
                         response.toWire()
                 );
                 if (responses.offer(responsePacket)) {
-                    System.out.printf("Information: succeeded to send response to %s:%s\n", requestPacket.address(), requestPacket.port());
+                    LOGGER.info("Succeeded to send response to {}:{}", requestPacket.address(), requestPacket.port());
                 } else {
-                    System.out.printf("Warning: failed to send response to %s:%s\n", requestPacket.address(), requestPacket.port());
+                    LOGGER.warn("Failed to send response to {}:{}", requestPacket.address(), requestPacket.port());
                 }
             }
         } catch (Exception exception) {
-            System.err.printf("Error: %s\n", exception.getMessage());
+            LOGGER.error("Failed to handle request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

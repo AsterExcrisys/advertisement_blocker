@@ -11,6 +11,8 @@ import com.asterexcrisys.adblocker.threads.Writer;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
@@ -27,6 +29,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @SuppressWarnings("unused")
 @Command(name = "proxy", mixinStandardHelpOptions = true, version = "1.0.0", description = "Starts a DNS Ad-Blocking Proxy with the given, or otherwise default (if applicable), parameters.")
 public class ProxyCommand implements Callable<Integer> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyCommand.class);
 
     @Parameters(index = "0", description = "The path to the file containing a list of DNS name servers (resolvers) (one per line).", arity = "1")
     private File nameServers;
@@ -112,7 +116,7 @@ public class ProxyCommand implements Callable<Integer> {
                 handler.setDaemon(true);
                 handler.start();
             }
-            System.out.printf("Information: DNS Ad-Blocking Proxy started on port %s\n", serverPort);
+            LOGGER.info("DNS Ad-Blocking Proxy started on port {}", serverPort);
             while (!Thread.currentThread().isInterrupted()) {
                 Thread.sleep(10000);
                 if (requests.size() < handlers.size() * (requestsLimit - 10)) {
@@ -121,7 +125,7 @@ public class ProxyCommand implements Callable<Integer> {
                     }
                     handlers.getLast().interrupt();
                     handlers.removeLast();
-                    System.out.println("Information: the last handler thread dispatch was reverted");
+                    LOGGER.info("The last handler thread dispatch was reverted");
                     continue;
                 }
                 if (requests.size() > (handlers.size() + 1) * (requestsLimit + 10)) {
@@ -131,7 +135,7 @@ public class ProxyCommand implements Callable<Integer> {
                     handlers.add(new Handler(lock, manager, requests, responses));
                     handlers.getLast().setDaemon(true);
                     handlers.getLast().start();
-                    System.out.println("Information: a new handler thread was dispatched");
+                    LOGGER.info("A new handler thread was dispatched");
                 }
             }
             return ExitCode.OK;
