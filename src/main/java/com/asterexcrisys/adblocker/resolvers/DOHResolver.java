@@ -19,6 +19,18 @@ public final class DOHResolver implements Resolver, AutoCloseable {
     private final String queryEndpoint;
     private final OkHttpClient client;
 
+    public DOHResolver(String nameServer) {
+        this.httpMethod = Method.POST;
+        this.nameServer = Objects.requireNonNull(nameServer);
+        queryEndpoint = "dns-query";
+        client = new OkHttpClient.Builder()
+                .callTimeout(Duration.ofSeconds(5))
+                .connectTimeout(Duration.ofSeconds(3))
+                .readTimeout(Duration.ofSeconds(5))
+                .retryOnConnectionFailure(true)
+                .build();
+    }
+
     public DOHResolver(Method httpMethod, String nameServer) {
         this.httpMethod = Objects.requireNonNull(httpMethod);
         this.nameServer = Objects.requireNonNull(nameServer);

@@ -75,10 +75,10 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 Plaintext file, one domain/address per line:
 
 ```
-1.1.1.1
-1.0.0.1
-8.8.8.8
-8.0.0.8
+STD:1.1.1.1
+STD:1.0.0.1
+STD:8.8.8.8
+STD:8.0.0.8
 ```
 
 ## 📄 Filtered Domains Format

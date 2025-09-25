@@ -1,7 +1,8 @@
 package com.asterexcrisys.adblocker.utility;
 
-import com.asterexcrisys.adblocker.resolvers.Resolver;
-import com.asterexcrisys.adblocker.resolvers.STDResolver;
+import com.asterexcrisys.adblocker.resolvers.*;
+import com.asterexcrisys.adblocker.resolvers.DOHResolver.Method;
+import com.asterexcrisys.adblocker.types.ResolverType;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,55 @@ public final class CommandUtility {
             List<Resolver> nameServers = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                nameServers.add(new STDResolver(line));
+                if (line.length() < 3) {
+                    throw new IllegalArgumentException("line must contain the resolver type");
+                }
+                ResolverType type = ResolverType.valueOf(line.substring(0, 3).toUpperCase());
+                switch (type) {
+                    case STD -> {
+                        String[] parts = line.split(":");
+                        if (parts.length != 2) {
+                            throw new IllegalArgumentException("line must contain the resolver address (STD)");
+                        }
+                        nameServers.add(new STDResolver(parts[1]));
+                    }
+                    case SEC -> {
+                        String[] parts = line.split(":");
+                        if (parts.length != 3) {
+                            throw new IllegalArgumentException("line must contain the trust anchor and resolver address (SEC)");
+                        }
+                        nameServers.add(new SECResolver(parts[1], parts[2]));
+                    }
+                    case DOT -> {
+                        String[] parts = line.split(":");
+                        if (parts.length < 2 || parts.length > 3) {
+                            throw new IllegalArgumentException("line must contain the resolver address and port (optional) (DOT)");
+                        }
+                        if (parts.length == 2) {
+                            nameServers.add(new DOTResolver(parts[1]));
+                        } else {
+                            nameServers.add(new DOTResolver(parts[1], Integer.parseInt(parts[2])));
+                        }
+                    }
+                    case DOQ -> {
+                        String[] parts = line.split(":");
+                        if (parts.length != 2) {
+                            throw new IllegalArgumentException("line must contain the resolver address (DOQ)");
+                        }
+                        nameServers.add(new DOQResolver(parts[1]));
+                    }
+                    case DOH -> {
+                        String[] parts = line.split(":");
+                        if (parts.length < 2 || parts.length > 3) {
+                            throw new IllegalArgumentException("line must contain the resolver method (optional) and address (DOT)");
+                        }
+                        if (parts.length == 2) {
+                            nameServers.add(new DOHResolver(parts[1]));
+                        } else {
+                            nameServers.add(new DOHResolver(Method.valueOf(parts[1].toUpperCase()), parts[2]));
+                        }
+                    }
+                }
             }
             return nameServers;
         }
