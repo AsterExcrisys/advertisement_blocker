@@ -31,10 +31,8 @@ public record DOQResolver(String nameServer) implements Resolver {
             QuicStream stream = connection.createStream(true);
             OutputStream output = stream.getOutputStream();
             InputStream input = stream.getInputStream();
-            byte[] bytes = request.toWire();
-            output.write((bytes.length >> 8) & 0xFF);
-            output.write(bytes.length & 0xFF);
-            output.write(bytes);
+            DNSUtility.updatePayloadSize(request);
+            output.write(request.toWire());
             output.flush();
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));

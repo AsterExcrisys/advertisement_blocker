@@ -6,6 +6,9 @@ import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
@@ -23,24 +26,25 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
             if (question == null) {
                 throw new IllegalArgumentException("No question found");
             }
-            Message response = new Message(request.getHeader().getID());
-            response.getHeader().setFlag(Flags.QR);
-            response.addRecord(question, Section.QUESTION);
-            Lookup lookup = new Lookup(
-                    question.getName(),
-                    question.getType(),
-                    question.getDClass()
-            );
             ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
             resolver.loadTrustAnchors(new ByteArrayInputStream(trustAnchor.getBytes(StandardCharsets.UTF_8)));
-            lookup.setResolver(resolver);
-            Record[] records = lookup.run();
-            if (lookup.getResult() == Lookup.SUCCESSFUL && records != null) {
-                for (Record record : records) {
-                    response.addRecord(record, Section.ANSWER);
-                }
+            OPTRecord record = request.getOPT();
+            boolean isSecure;
+            if (record != null) {
+                resolver.setEDNS(
+                        record.getVersion(),
+                        4096,
+                        record.getFlags() | ExtendedFlags.DO,
+                        record.getOptions()
+                );
+                isSecure = (record.getFlags() & ExtendedFlags.DO) == ExtendedFlags.DO;
             } else {
-                response.getHeader().setRcode(lookup.getResult());
+                resolver.setEDNS(0, 4096, ExtendedFlags.DO, Collections.emptyList());
+                isSecure = false;
+            }
+            Message response = resolver.send(request);
+            if (!isSecure) {
+                stripAdditionalRecords(response);
             }
             return response;
         } catch (Exception exception) {
@@ -50,6 +54,33 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
                     2,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
+        }
+    }
+
+    private void stripAdditionalRecords(Message response) {
+        for (int section : new int[] {Section.ANSWER, Section.AUTHORITY, Section.ADDITIONAL}) {
+            List<Record> records = new ArrayList<>();
+            for (Record record : response.getSection(section)) {
+                int type = record.getType();
+                if (type == Type.RRSIG || type == Type.DNSKEY || type == Type.NSEC || type == Type.NSEC3) {
+                    records.add(record);
+                }
+            }
+            for (Record record : records) {
+                response.removeRecord(record, section);
+            }
+        }
+        OPTRecord oldRecord = response.getOPT();
+        if (oldRecord != null) {
+            OPTRecord newRecord = new OPTRecord(
+                    oldRecord.getPayloadSize(),
+                    oldRecord.getExtendedRcode(),
+                    oldRecord.getVersion(),
+                    oldRecord.getFlags() & ~ExtendedFlags.DO,
+                    oldRecord.getOptions()
+            );
+            response.removeAllRecords(Section.ADDITIONAL);
+            response.addRecord(newRecord, Section.ADDITIONAL);
         }
     }
 

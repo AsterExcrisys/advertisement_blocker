@@ -21,7 +21,7 @@ public class Reader extends Thread {
     @Override
     public void run() {
         try {
-            byte[] buffer = new byte[512];
+            byte[] buffer = new byte[4096];
             while (!Thread.currentThread().isInterrupted() && !socket.isClosed()) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);

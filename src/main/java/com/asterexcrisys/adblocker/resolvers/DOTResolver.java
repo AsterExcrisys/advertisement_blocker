@@ -42,6 +42,7 @@ public final class DOTResolver implements Resolver {
             socket.setSoTimeout(5000);
             OutputStream output = socket.getOutputStream();
             InputStream input = socket.getInputStream();
+            DNSUtility.updatePayloadSize(request);
             byte[] bytes = request.toWire();
             output.write((bytes.length >> 8) & 0xFF);
             output.write(bytes.length & 0xFF);

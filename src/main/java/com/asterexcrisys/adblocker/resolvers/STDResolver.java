@@ -3,6 +3,7 @@ package com.asterexcrisys.adblocker.resolvers;
 import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
+import java.util.Collections;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
@@ -19,24 +20,19 @@ public record STDResolver(String nameServer) implements Resolver {
             if (question == null) {
                 throw new IllegalArgumentException("No question found");
             }
-            Message response = new Message(request.getHeader().getID());
-            response.getHeader().setFlag(Flags.QR);
-            response.addRecord(question, Section.QUESTION);
-            Lookup lookup = new Lookup(
-                    question.getName(),
-                    question.getType(),
-                    question.getDClass()
-            );
-            lookup.setResolver(new SimpleResolver(nameServer));
-            Record[] records = lookup.run();
-            if (lookup.getResult() == Lookup.SUCCESSFUL && records != null) {
-                for (Record record : records) {
-                    response.addRecord(record, Section.ANSWER);
-                }
+            SimpleResolver resolver = new SimpleResolver(nameServer);
+            OPTRecord record = request.getOPT();
+            if (record != null) {
+                resolver.setEDNS(
+                        record.getVersion(),
+                        4096,
+                        record.getFlags(),
+                        record.getOptions()
+                );
             } else {
-                response.getHeader().setRcode(lookup.getResult());
+                resolver.setEDNS(0, 4096, 0, Collections.emptyList());
             }
-            return response;
+            return resolver.send(request);
         } catch (Exception exception) {
             return DNSUtility.buildErrorResponse(
                     request,

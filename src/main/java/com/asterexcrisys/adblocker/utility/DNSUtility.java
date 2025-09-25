@@ -7,6 +7,19 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("unused")
 public final class DNSUtility {
 
+    public static void updatePayloadSize(Message request) {
+        OPTRecord oldRecord = request.getOPT();
+        OPTRecord newRecord = new OPTRecord(
+                4096,
+                oldRecord.getExtendedRcode(),
+                oldRecord.getVersion(),
+                oldRecord.getFlags(),
+                oldRecord.getOptions()
+        );
+        request.removeAllRecords(Section.ADDITIONAL);
+        request.addRecord(newRecord, Section.ADDITIONAL);
+    }
+
     public static Message buildErrorResponse(Message request, int statusCode, int optionCode, String optionMessage) {
         Message response = new Message(request.getHeader().getID());
         response.getHeader().setFlag(Flags.QR);

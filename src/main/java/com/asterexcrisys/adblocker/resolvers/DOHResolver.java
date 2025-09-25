@@ -6,6 +6,7 @@ import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
@@ -57,12 +58,13 @@ public final class DOHResolver implements Resolver, AutoCloseable {
     @Override
     public Message resolve(Message request) {
         try {
-            RequestBody body = RequestBody.create(request.toWire(), MEDIA_TYPE);
-            Request httpRequest = new Request.Builder()
-                    .url("https://%s/%s".formatted(nameServer, queryEndpoint))
-                    .addHeader("Accept", MEDIA_TYPE.type())
-                    .method(httpMethod.name(), body)
-                    .build();
+            DNSUtility.updatePayloadSize(request);
+            Request httpRequest;
+            if (httpMethod == Method.GET) {
+                httpRequest = buildGetRequest(request);
+            } else {
+                httpRequest = buildPostRequest(request);
+            }
             try (Response httpResponse = client.newCall(httpRequest).execute()) {
                 if (!httpResponse.isSuccessful() || httpResponse.body() == null) {
                     throw new IOException("Unexpected response from '%s'".formatted(nameServer));
@@ -86,6 +88,25 @@ public final class DOHResolver implements Resolver, AutoCloseable {
         if (client.cache() != null) {
             client.cache().close();
         }
+    }
+
+    private Request buildGetRequest(Message request) {
+        String dnsRequest = Base64.getEncoder().encodeToString(request.toWire());
+        return new Request.Builder()
+                .url("https://%s/%s?dns=%s".formatted(nameServer, queryEndpoint, dnsRequest))
+                .addHeader("Content-Type", MEDIA_TYPE.type())
+                .get()
+                .build();
+    }
+
+    private Request buildPostRequest(Message request) {
+        RequestBody dnsRequest = RequestBody.create(request.toWire(), MEDIA_TYPE);
+        return new Request.Builder()
+                .url("https://%s/%s".formatted(nameServer, queryEndpoint))
+                .addHeader("Content-Type", MEDIA_TYPE.type())
+                .addHeader("Accept", MEDIA_TYPE.type())
+                .post(dnsRequest)
+                .build();
     }
 
     public enum Method {
