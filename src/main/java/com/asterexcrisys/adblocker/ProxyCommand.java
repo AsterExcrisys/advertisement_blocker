@@ -5,9 +5,9 @@ import com.asterexcrisys.adblocker.filters.WhitelistFilter;
 import com.asterexcrisys.adblocker.matchers.ExactMatcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import com.asterexcrisys.adblocker.services.ProxyManager;
-import com.asterexcrisys.adblocker.threads.Handler;
-import com.asterexcrisys.adblocker.threads.Reader;
-import com.asterexcrisys.adblocker.threads.Writer;
+import com.asterexcrisys.adblocker.threads.UDPHandler;
+import com.asterexcrisys.adblocker.threads.UDPReader;
+import com.asterexcrisys.adblocker.threads.UDPWriter;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
@@ -102,10 +102,10 @@ public class ProxyCommand implements Callable<Integer> {
             manager.setCacheMaximumSize(cacheLimit);
             BlockingQueue<UDPPacket> requests = new LinkedBlockingQueue<>();
             BlockingQueue<UDPPacket> responses = new LinkedBlockingQueue<>();
-            Thread reader = new Reader(socket, requests);
-            Thread writer = new Writer(socket, responses);
+            Thread reader = new UDPReader(socket, requests);
+            Thread writer = new UDPWriter(socket, responses);
             List<Thread> handlers = new ArrayList<>(GlobalUtility.fillList(
-                    () -> new Handler(lock, manager, requests, responses),
+                    () -> new UDPHandler(lock, manager, requests, responses),
                     minimumThreads
             ));
             reader.setDaemon(true);
@@ -132,7 +132,7 @@ public class ProxyCommand implements Callable<Integer> {
                     if (handlers.size() == maximumThreads) {
                         continue;
                     }
-                    handlers.add(new Handler(lock, manager, requests, responses));
+                    handlers.add(new UDPHandler(lock, manager, requests, responses));
                     handlers.getLast().setDaemon(true);
                     handlers.getLast().start();
                     LOGGER.info("A new handler thread was dispatched");

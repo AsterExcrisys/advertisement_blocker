@@ -9,14 +9,14 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
 @SuppressWarnings("unused")
-public class Writer extends Thread {
+public class UDPWriter extends Thread {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Writer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UDPWriter.class);
 
     private final DatagramSocket socket;
     private final BlockingQueue<UDPPacket> responses;
 
-    public Writer(DatagramSocket socket, BlockingQueue<UDPPacket> responses) {
+    public UDPWriter(DatagramSocket socket, BlockingQueue<UDPPacket> responses) {
         this.socket = Objects.requireNonNull(socket);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -35,7 +35,7 @@ public class Writer extends Thread {
                 socket.send(packet);
             }
         } catch (Exception exception) {
-            LOGGER.error("Failed to send response: {}", exception.getMessage());
+            LOGGER.error("Failed to send UDP response: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

@@ -10,14 +10,14 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
 @SuppressWarnings("unused")
-public class Reader extends Thread {
+public class UDPReader extends Thread {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Reader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UDPReader.class);
 
     private final DatagramSocket socket;
     private final BlockingQueue<UDPPacket> requests;
 
-    public Reader(DatagramSocket socket, BlockingQueue<UDPPacket> requests) {
+    public UDPReader(DatagramSocket socket, BlockingQueue<UDPPacket> requests) {
         this.socket = Objects.requireNonNull(socket);
         this.requests = Objects.requireNonNull(requests);
     }
@@ -35,13 +35,13 @@ public class Reader extends Thread {
                         Arrays.copyOf(packet.getData(), packet.getLength())
                 );
                 if (requests.offer(requestPacket)) {
-                    LOGGER.info("Succeeded to receive request from {}:{}", requestPacket.address(), requestPacket.port());
+                    LOGGER.info("Succeeded to receive UDP request from {}:{}", requestPacket.address(), requestPacket.port());
                 } else {
-                    LOGGER.warn("Failed to receive request from {}:{}", requestPacket.address(), requestPacket.port());
+                    LOGGER.warn("Failed to receive UDP request from {}:{}", requestPacket.address(), requestPacket.port());
                 }
             }
         } catch (Exception exception) {
-            LOGGER.error("Failed to read request: {}", exception.getMessage());
+            LOGGER.error("Failed to read UDP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         }
     }

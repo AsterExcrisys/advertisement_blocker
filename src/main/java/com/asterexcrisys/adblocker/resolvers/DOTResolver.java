@@ -43,10 +43,10 @@ public final class DOTResolver implements Resolver {
             OutputStream output = socket.getOutputStream();
             InputStream input = socket.getInputStream();
             DNSUtility.updatePayloadSize(request);
-            byte[] bytes = request.toWire();
-            output.write((bytes.length >> 8) & 0xFF);
-            output.write(bytes.length & 0xFF);
-            output.write(bytes);
+            byte[] data = request.toWire();
+            output.write((data.length >> 8) & 0xFF);
+            output.write(data.length & 0xFF);
+            output.write(data);
             output.flush();
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
