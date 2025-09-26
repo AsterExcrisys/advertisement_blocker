@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class TCPHandler extends Thread {
+public class TCPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPHandler.class);
 

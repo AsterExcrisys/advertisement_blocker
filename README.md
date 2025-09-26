@@ -1,14 +1,14 @@
 # Advertisement Blocker
 
-A simple, configurable DNS proxy server written in Java that blocks known ad-serving domains. This tool intercepts DNS requests and filters out domains from a blocklist, preventing clients from resolving and connecting to ad networks and trackers.
+A simple, configurable DNS proxy server written in Java that blocks known ad-serving domains. This tool intercepts DNS requests and filters out domains from a blocklist, preventing clients from resolving and connecting to advertisement networks and trackers.
 
 ## ✨ Features
 
 * ✅ Intercepts and handles DNS requests (must be set as the upstream resolver)
-* 🚫 Blocks known ad and tracking domains
+* 🚫 Blocks known advertisement and tracking domains
 * 📝 Supports both blacklists and whitelists with exact or wildcard matchers
 * 💾 Lightweight, few external dependencies
-* 🔧 Configurable via CLI arguments (uses TXT files for name servers and filtered domains)
+* 🔧 Configurable via CLI arguments (uses simple TXT files for name servers and filtered domains)
 * 📄 Logs DNS queries and blocked domains
 
 ## 📦 How It Works
@@ -57,22 +57,34 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 
 ### Configuration Options
 
-| **Index/Option**            | **Name(s)**       | **Description**                                                                       | **Default** |
-|-----------------------------|-------------------|---------------------------------------------------------------------------------------|-------------|
-| `0`                         | *nameServers*     | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
-| `1`                         | *filteredDomains* | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
-| `-wl`, `--is-whitelist`     | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
-| `-wc`, `--is-wildcard`      | *isWildcard*      | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
-| `-sp`, `--server-port`      | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
-| `-cl`, `--cache-limit`      | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
-| `-rt`, `--request-timeout`  | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
-| `-rl`, `--requests-limit`   | *requestsLimit*   | Maximum number of requests each handler thread should process.                        | `100`       |
-| `-min`, `--minimum-threads` | *minimumThreads*  | Minimum number of handler threads maintained at all times.                            | `5`         |
-| `-max`, `--maximum-threads` | *maximumThreads*  | Maximum number of handler threads that can exist.                                     | `10`        |
+| **Index/Option**           | **Name(s)**       | **Description**                                                                       | **Default** |
+|----------------------------|-------------------|---------------------------------------------------------------------------------------|-------------|
+| `0`                        | *nameServers*     | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
+| `1`                        | *filteredDomains* | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
+| `-wl`, `--is-whitelist`    | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
+| `-wc`, `--is-wildcard`     | *isWildcard*      | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
+| `-sp`, `--server-port`     | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
+| `-cl`, `--cache-limit`     | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
+| `-rt`, `--request-timeout` | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
+| `-rl`, `--requests-limit`  | *requestsLimit*   | Maximum number of requests each handler task should process.                          | `100`       |
+| `-mnt`, `--minimum-tasks`  | *minimumTasks*    | Minimum number of handler tasks maintained at all times.                              | `5`         |
+| `-mxt`, `--maximum-tasks`  | *maximumTasks*    | Maximum number of handler tasks that can exist.                                       | `10`        |
+
+## 📄 Supported Resolver Types
+
+There are currently 5 resolver types supported by this proxy. Be aware that this only refers to **upstream** resolver types. The only types support for **downstream** requests are DNS over UDP and TCP.
+
+| **Full Name**             | **Short Name** | **Notes**          | **Format**                |
+|---------------------------|----------------|--------------------|---------------------------|
+| `Standard DNS (over UDP)` | *STD*          | N/A                | Type:Address              |
+| `Secure DNS (over UDP)`   | *SEC*          | N/A                | Type:Trust-Anchor:Address |
+| `DNS over TLS`            | *DOT*          | Needs to be tested | Type:Address:Port         |
+| `DNS over QUIC`           | *DOQ*          | Needs to be tested | Type:Address              |
+| `DNS over HTTPS`          | *DOH*          | Needs to be tested | Type:Method:Address       |
 
 ## 📄 Name Servers Format
 
-Plaintext file, one domain/address per line:
+Plaintext file, one domain/address (preceded by the resolver type) per line:
 
 ```
 STD:1.1.1.1
@@ -104,6 +116,7 @@ If blocked, you'll get a `BLOCKED` response.
 ## 🔒 Security Notes
 
 * Should be run with appropriate permissions (port 53 requires root on UNIX).
+* Only supports DNS over UDP/TCP for downstream requests, other methods (such as DNS over TLS, QUIC, and HTTPS) will simply not work.
 * Not recommended for production use without proper sandboxing or validation.
 
 ## 📜 License

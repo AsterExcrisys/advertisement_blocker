@@ -12,7 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
-public class UDPHandler extends Thread {
+public class UDPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UDPHandler.class);
 

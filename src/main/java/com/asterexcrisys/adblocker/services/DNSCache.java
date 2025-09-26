@@ -30,30 +30,6 @@ public class DNSCache {
         cache.setMaxEntries(maximumSize);
     }
 
-    public void put(Message response) {
-        if (response == null) {
-            throw new IllegalArgumentException();
-        }
-        for (Record answer : response.getSection(Section.ANSWER)) {
-            cache.addRecord(answer, Credibility.NORMAL);
-        }
-    }
-
-    public void remove(Message request, boolean byType) {
-        if (request == null || request.getQuestion() == null) {
-            return;
-        }
-        if (byType) {
-            cache.flushSet(request.getQuestion().getName(), request.getQuestion().getType());
-        } else {
-            cache.flushName(request.getQuestion().getName());
-        }
-    }
-
-    public void clear() {
-        cache.clearCache();
-    }
-
     public Optional<Message> get(Message request) {
         if (request == null || request.getQuestion() == null) {
             return Optional.empty();
@@ -76,6 +52,30 @@ public class DNSCache {
             }
         }
         return Optional.of(response);
+    }
+
+    public void put(Message response) {
+        if (response == null) {
+            throw new IllegalArgumentException();
+        }
+        for (Record answer : response.getSection(Section.ANSWER)) {
+            cache.addRecord(answer, Credibility.NORMAL);
+        }
+    }
+
+    public void remove(Message request, boolean byType) {
+        if (request == null || request.getQuestion() == null) {
+            return;
+        }
+        if (byType) {
+            cache.flushSet(request.getQuestion().getName(), request.getQuestion().getType());
+        } else {
+            cache.flushName(request.getQuestion().getName());
+        }
+    }
+
+    public void clear() {
+        cache.clearCache();
     }
 
 }

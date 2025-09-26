@@ -11,7 +11,6 @@ import com.asterexcrisys.adblocker.threads.UDPWriter;
 import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.ExitCode;
@@ -23,9 +22,7 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -56,14 +53,14 @@ public class ProxyCommand implements Callable<Integer> {
     @Option(names = {"-rt", "--request-timeout"}, description = "The timeout in milliseconds for each incoming request (if it does expire, the request is rejected) (optional).", defaultValue = "5000")
     private int requestTimeout;
 
-    @Option(names = {"-rl", "--requests-limit"}, description = "The requests limit per handler threads (how many they should handle at maximum) (optional).", defaultValue = "100")
+    @Option(names = {"-rl", "--requests-limit"}, description = "The requests limit per handler task (how many they should handle at maximum) (optional).", defaultValue = "100")
     private int requestsLimit;
 
-    @Option(names = {"-min", "--minimum-threads"}, description = "The minimum number of handler threads that exists at any given time (optional).", defaultValue = "5")
-    private int minimumThreads;
+    @Option(names = {"-mnt", "--minimum-tasks"}, description = "The minimum number of handler tasks that exists at any given time (optional).", defaultValue = "5")
+    private int minimumTasks;
 
-    @Option(names = {"-max", "--maximum-threads"}, description = "The maximum number of handler threads that can exists at any given time (optional).", defaultValue = "10")
-    private int maximumThreads;
+    @Option(names = {"-mxt", "--maximum-tasks"}, description = "The maximum number of handler tasks that can exists at any given time (optional).", defaultValue = "10")
+    private int maximumTasks;
 
     @Override
     public Integer call() throws Exception {
@@ -85,18 +82,24 @@ public class ProxyCommand implements Callable<Integer> {
         if (requestsLimit < 1 || requestsLimit > 1000) {
             throw new IllegalArgumentException("requests limit must be in the range [1, 1000]");
         }
-        if (minimumThreads < 1 || minimumThreads > 10000) {
-            throw new IllegalArgumentException("minimum threads must be in the range [1, 10000]");
+        if (minimumTasks < 1 || minimumTasks > 1000) {
+            throw new IllegalArgumentException("minimum tasks must be in the range [1, 1000]");
         }
-        if (maximumThreads < 1 || maximumThreads > 10000) {
-            throw new IllegalArgumentException("maximum threads must be in the range [1, 10000]");
+        if (maximumTasks < 1 || maximumTasks > 1000) {
+            throw new IllegalArgumentException("maximum tasks must be in the range [1, 1000]");
         }
-        if (minimumThreads > maximumThreads) {
-            throw new IllegalArgumentException("minimum threads must not exceed maximum threads");
+        if (minimumTasks > maximumTasks) {
+            throw new IllegalArgumentException("minimum tasks must not exceed maximum tasks");
         }
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
-        try (DatagramSocket socket = new DatagramSocket(serverPort)) {
-            final int poolSize = Math.max(Math.floorDiv(maximumThreads, 5), 1);
+        try (
+                ExecutorService executor = initializeExecutor();
+                DatagramSocket socket = new DatagramSocket(serverPort)
+        ) {
+            final int poolSize = Math.min(
+                    Math.max(Math.floorDiv(maximumTasks, 5), 1),
+                    Runtime.getRuntime().availableProcessors()
+            );
             final ThreadContext[] contexts = new ThreadContext[poolSize];
             for (int i = 0; i < poolSize; i++) {
                 contexts[i] = initializeContext();
@@ -110,37 +113,31 @@ public class ProxyCommand implements Callable<Integer> {
             BlockingQueue<UDPPacket> responses = new LinkedBlockingQueue<>();
             Thread reader = new UDPReader(socket, requests);
             Thread writer = new UDPWriter(socket, responses);
-            List<Thread> handlers = new ArrayList<>(GlobalUtility.fillList(
-                    () -> new UDPHandler(local, requests, responses),
-                    minimumThreads
-            ));
+            List<Future<?>> handlers = new ArrayList<>(minimumTasks);
             reader.setDaemon(true);
             reader.start();
             writer.setDaemon(true);
             writer.start();
-            for (Thread handler : handlers) {
-                handler.setDaemon(true);
-                handler.start();
+            for (int i = 0; i < minimumTasks; i++) {
+                handlers.add(executor.submit(new UDPHandler(local, requests, responses)));
             }
             LOGGER.info("DNS Ad-Blocking Proxy started on port {}", serverPort);
             while (!Thread.currentThread().isInterrupted()) {
                 Thread.sleep(10000);
                 if (requests.size() < handlers.size() * (requestsLimit - 10)) {
-                    if (handlers.size() == minimumThreads) {
+                    if (handlers.size() == minimumTasks) {
                         continue;
                     }
-                    handlers.getLast().interrupt();
+                    handlers.getLast().cancel(true);
                     handlers.removeLast();
                     LOGGER.info("The last handler thread dispatch was reverted");
                     continue;
                 }
                 if (requests.size() > (handlers.size() + 1) * (requestsLimit + 10)) {
-                    if (handlers.size() == maximumThreads) {
+                    if (handlers.size() == maximumTasks) {
                         continue;
                     }
-                    handlers.add(new UDPHandler(local, requests, responses));
-                    handlers.getLast().setDaemon(true);
-                    handlers.getLast().start();
+                    handlers.add(executor.submit(new UDPHandler(local, requests, responses)));
                     LOGGER.info("A new handler thread was dispatched");
                 }
             }
@@ -148,6 +145,18 @@ public class ProxyCommand implements Callable<Integer> {
         } finally {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public ExecutorService initializeExecutor() {
+        return new ThreadPoolExecutor(
+                minimumTasks,
+                Runtime.getRuntime().availableProcessors(),
+                60L,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(maximumTasks),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
     }
 
     public ThreadContext initializeContext() throws IOException {
