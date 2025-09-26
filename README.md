@@ -67,7 +67,7 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 | `-cl`, `--cache-limit`      | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
 | `-rt`, `--request-timeout`  | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
 | `-rl`, `--requests-limit`   | *requestsLimit*   | Maximum number of requests each handler thread should process.                        | `100`       |
-| `-min`, `--minimum-threads` | *minimumThreads*  | Minimum number of handler threads maintained at all times.                            | `1`         |
+| `-min`, `--minimum-threads` | *minimumThreads*  | Minimum number of handler threads maintained at all times.                            | `5`         |
 | `-max`, `--maximum-threads` | *maximumThreads*  | Maximum number of handler threads that can exist.                                     | `10`        |
 
 ## 📄 Name Servers Format

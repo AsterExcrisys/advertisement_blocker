@@ -59,7 +59,7 @@ public class ProxyCommand implements Callable<Integer> {
     @Option(names = {"-rl", "--requests-limit"}, description = "The requests limit per handler threads (how many they should handle at maximum) (optional).", defaultValue = "100")
     private int requestsLimit;
 
-    @Option(names = {"-min", "--minimum-threads"}, description = "The minimum number of handler threads that exists at any given time (optional).", defaultValue = "1")
+    @Option(names = {"-min", "--minimum-threads"}, description = "The minimum number of handler threads that exists at any given time (optional).", defaultValue = "5")
     private int minimumThreads;
 
     @Option(names = {"-max", "--maximum-threads"}, description = "The maximum number of handler threads that can exists at any given time (optional).", defaultValue = "10")
