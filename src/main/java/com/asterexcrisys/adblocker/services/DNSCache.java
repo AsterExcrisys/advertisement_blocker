@@ -11,6 +11,7 @@ public class DNSCache {
 
     public DNSCache() {
         cache = new Cache(DClass.IN);
+        cache.setMaxEntries(1000);
     }
 
     public DNSCache(int maximumSize) {

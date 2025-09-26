@@ -1,5 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
+import com.asterexcrisys.adblocker.types.HttpMethod;
 import com.asterexcrisys.adblocker.utility.DNSUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
@@ -14,13 +15,13 @@ public final class DOHResolver implements Resolver, AutoCloseable {
 
     private static final MediaType MEDIA_TYPE = MediaType.get("application/dns-message");
 
-    private final Method httpMethod;
+    private final HttpMethod httpMethod;
     private final String nameServer;
     private final String queryEndpoint;
     private final OkHttpClient client;
 
     public DOHResolver(String nameServer) {
-        this.httpMethod = Method.POST;
+        this.httpMethod = HttpMethod.POST;
         this.nameServer = Objects.requireNonNull(nameServer);
         queryEndpoint = "dns-query";
         client = new OkHttpClient.Builder()
@@ -31,7 +32,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 .build();
     }
 
-    public DOHResolver(Method httpMethod, String nameServer) {
+    public DOHResolver(HttpMethod httpMethod, String nameServer) {
         this.httpMethod = Objects.requireNonNull(httpMethod);
         this.nameServer = Objects.requireNonNull(nameServer);
         queryEndpoint = "dns-query";
@@ -43,7 +44,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 .build();
     }
 
-    public DOHResolver(Method httpMethod, String nameServer, String queryEndpoint) {
+    public DOHResolver(HttpMethod httpMethod, String nameServer, String queryEndpoint) {
         this.httpMethod = Objects.requireNonNull(httpMethod);
         this.nameServer = Objects.requireNonNull(nameServer);
         this.queryEndpoint = Objects.requireNonNull(queryEndpoint);
@@ -55,7 +56,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 .build();
     }
 
-    public Method httpMethod() {
+    public HttpMethod httpMethod() {
         return httpMethod;
     }
 
@@ -72,7 +73,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
         try {
             DNSUtility.updatePayloadSize(request);
             Request httpRequest;
-            if (httpMethod == Method.GET) {
+            if (httpMethod == HttpMethod.GET) {
                 httpRequest = buildGetRequest(request);
             } else {
                 httpRequest = buildPostRequest(request);
@@ -119,11 +120,6 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 .addHeader("Accept", MEDIA_TYPE.type())
                 .post(dnsRequest)
                 .build();
-    }
-
-    public enum Method {
-        GET,
-        POST
     }
 
 }

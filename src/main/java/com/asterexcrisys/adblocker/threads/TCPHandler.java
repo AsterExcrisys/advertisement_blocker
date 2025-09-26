@@ -2,6 +2,7 @@ package com.asterexcrisys.adblocker.threads;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.types.TCPPacket;
+import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,14 +16,14 @@ public class TCPHandler extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPHandler.class);
 
-    private final ReentrantLock lock;
-    private final ProxyManager manager;
+    private final ThreadLocal<ThreadContext> local;
+    private final ThreadContext context;
     private final BlockingQueue<TCPPacket> requests;
     private final BlockingQueue<TCPPacket> responses;
 
-    public TCPHandler(ReentrantLock lock, ProxyManager manager, BlockingQueue<TCPPacket> requests, BlockingQueue<TCPPacket> responses) {
-        this.lock = Objects.requireNonNull(lock);
-        this.manager = Objects.requireNonNull(manager);
+    public TCPHandler(ThreadLocal<ThreadContext> local, BlockingQueue<TCPPacket> requests, BlockingQueue<TCPPacket> responses) {
+        this.local = Objects.requireNonNull(local);
+        this.context = Objects.requireNonNull(local.get());
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -30,6 +31,8 @@ public class TCPHandler extends Thread {
     @Override
     public void run() {
         try {
+            ReentrantLock lock = context.lock();
+            ProxyManager manager = context.manager();
             while (!Thread.currentThread().isInterrupted()) {
                 TCPPacket requestPacket = requests.take();
                 Socket clientSocket = requestPacket.socket();
@@ -56,6 +59,9 @@ public class TCPHandler extends Thread {
         } catch (Exception exception) {
             LOGGER.error("Failed to handle TCP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
+        } finally {
+            context.remove();
+            local.remove();
         }
     }
 

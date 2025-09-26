@@ -1,6 +1,7 @@
 package com.asterexcrisys.adblocker.threads;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.slf4j.Logger;
@@ -15,14 +16,14 @@ public class UDPHandler extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UDPHandler.class);
 
-    private final ReentrantLock lock;
-    private final ProxyManager manager;
+    private final ThreadLocal<ThreadContext> local;
+    private final ThreadContext context;
     private final BlockingQueue<UDPPacket> requests;
     private final BlockingQueue<UDPPacket> responses;
 
-    public UDPHandler(ReentrantLock lock, ProxyManager manager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
-        this.lock = Objects.requireNonNull(lock);
-        this.manager = Objects.requireNonNull(manager);
+    public UDPHandler(ThreadLocal<ThreadContext> local, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
+        this.local = Objects.requireNonNull(local);
+        this.context = Objects.requireNonNull(local.get());
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -30,6 +31,8 @@ public class UDPHandler extends Thread {
     @Override
     public void run() {
         try {
+            ReentrantLock lock = context.lock();
+            ProxyManager manager = context.manager();
             while (!Thread.currentThread().isInterrupted()) {
                 UDPPacket requestPacket = requests.take();
                 Message request = new Message(requestPacket.data());
@@ -48,6 +51,9 @@ public class UDPHandler extends Thread {
         } catch (Exception exception) {
             LOGGER.error("Failed to handle UDP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
+        } finally {
+            context.remove();
+            local.remove();
         }
     }
 

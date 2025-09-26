@@ -1,7 +1,7 @@
 package com.asterexcrisys.adblocker.utility;
 
 import com.asterexcrisys.adblocker.resolvers.*;
-import com.asterexcrisys.adblocker.resolvers.DOHResolver.Method;
+import com.asterexcrisys.adblocker.types.HttpMethod;
 import com.asterexcrisys.adblocker.types.ResolverType;
 import java.io.*;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public final class CommandUtility {
                         if (parts.length == 2) {
                             nameServers.add(new DOHResolver(parts[1]));
                         } else {
-                            nameServers.add(new DOHResolver(Method.valueOf(parts[1].toUpperCase()), parts[2]));
+                            nameServers.add(new DOHResolver(HttpMethod.valueOf(parts[1].toUpperCase()), parts[2]));
                         }
                     }
                 }

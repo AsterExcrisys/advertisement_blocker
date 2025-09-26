@@ -8,6 +8,7 @@ import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.threads.UDPHandler;
 import com.asterexcrisys.adblocker.threads.UDPReader;
 import com.asterexcrisys.adblocker.threads.UDPWriter;
+import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
@@ -18,12 +19,14 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import java.io.File;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
@@ -93,19 +96,22 @@ public class ProxyCommand implements Callable<Integer> {
         }
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
         try (DatagramSocket socket = new DatagramSocket(serverPort)) {
-            ReentrantLock lock = new ReentrantLock();
-            ProxyManager manager = new ProxyManager();
-            manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
-            manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
-            manager.addResolvers(CommandUtility.parseNameServers(nameServers));
-            manager.addFilteredDomains(CommandUtility.parseFilteredDomains(filteredDomains));
-            manager.setCacheMaximumSize(cacheLimit);
+            final int poolSize = Math.max(Math.floorDiv(maximumThreads, 5), 1);
+            final ThreadContext[] contexts = new ThreadContext[poolSize];
+            for (int i = 0; i < poolSize; i++) {
+                contexts[i] = initializeContext();
+            }
+            AtomicInteger counter = new AtomicInteger(0);
+            ThreadLocal<ThreadContext> local = ThreadLocal.withInitial(() -> {
+                int index = counter.getAndIncrement() % poolSize;
+                return contexts[index];
+            });
             BlockingQueue<UDPPacket> requests = new LinkedBlockingQueue<>();
             BlockingQueue<UDPPacket> responses = new LinkedBlockingQueue<>();
             Thread reader = new UDPReader(socket, requests);
             Thread writer = new UDPWriter(socket, responses);
             List<Thread> handlers = new ArrayList<>(GlobalUtility.fillList(
-                    () -> new UDPHandler(lock, manager, requests, responses),
+                    () -> new UDPHandler(local, requests, responses),
                     minimumThreads
             ));
             reader.setDaemon(true);
@@ -132,7 +138,7 @@ public class ProxyCommand implements Callable<Integer> {
                     if (handlers.size() == maximumThreads) {
                         continue;
                     }
-                    handlers.add(new UDPHandler(lock, manager, requests, responses));
+                    handlers.add(new UDPHandler(local, requests, responses));
                     handlers.getLast().setDaemon(true);
                     handlers.getLast().start();
                     LOGGER.info("A new handler thread was dispatched");
@@ -142,6 +148,17 @@ public class ProxyCommand implements Callable<Integer> {
         } finally {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public ThreadContext initializeContext() throws IOException {
+        ReentrantLock lock = new ReentrantLock();
+        ProxyManager manager = new ProxyManager();
+        manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
+        manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
+        manager.addResolvers(CommandUtility.parseNameServers(nameServers));
+        manager.addFilteredDomains(CommandUtility.parseFilteredDomains(filteredDomains));
+        manager.setCacheMaximumSize(cacheLimit);
+        return ThreadContext.of(lock, manager);
     }
 
 }

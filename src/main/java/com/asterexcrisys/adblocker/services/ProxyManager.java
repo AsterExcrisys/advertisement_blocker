@@ -9,6 +9,7 @@ import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class ProxyManager {
@@ -18,7 +19,7 @@ public class ProxyManager {
     private Filter filter;
 
     public ProxyManager() {
-        resolvers = new HashSet<>();
+        resolvers = ConcurrentHashMap.newKeySet();
         cache = new DNSCache();
         filter = new BlacklistFilter();
     }
