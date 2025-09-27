@@ -13,9 +13,8 @@ A simple, configurable DNS proxy server written in Java that blocks known ad-ser
 
 ## 📦 How It Works
 
-1. The proxy listens for DNS requests from clients.
+1. The proxy listens for DNS requests from clients (either through UDP or TCP).
 2. For each incoming request:
-
    * If the domain is on the blocklist, it responds with a `BLOCKED` status code.
    * Otherwise, it forwards the request to an upstream DNS resolver (e.g., `1.1.1.1`).
 3. Returns the valid response to the client.

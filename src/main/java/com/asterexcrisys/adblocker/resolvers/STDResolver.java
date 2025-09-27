@@ -3,6 +3,7 @@ package com.asterexcrisys.adblocker.resolvers;
 import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -21,6 +22,7 @@ public record STDResolver(String nameServer) implements Resolver {
                 throw new IllegalArgumentException("No question found");
             }
             SimpleResolver resolver = new SimpleResolver(nameServer);
+            resolver.setTimeout(Duration.ofMillis(5000));
             OPTRecord record = request.getOPT();
             if (record != null) {
                 resolver.setEDNS(

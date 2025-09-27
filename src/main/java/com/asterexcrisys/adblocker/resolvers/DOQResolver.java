@@ -4,10 +4,12 @@ import com.asterexcrisys.adblocker.utility.DNSUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import tech.kwik.core.QuicClientConnection;
+import tech.kwik.core.QuicConnection;
 import tech.kwik.core.QuicStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
@@ -26,6 +28,9 @@ public record DOQResolver(String nameServer) implements Resolver {
             connection = QuicClientConnection.newBuilder()
                     .uri(URI.create(nameServer))
                     .applicationProtocol(APPLICATION_PROTOCOL)
+                    .connectTimeout(Duration.ofMillis(3000))
+                    .maxIdleTimeout(Duration.ofMillis(5000))
+                    .version(QuicConnection.QuicVersion.V2)
                     .build();
             connection.connect();
             QuicStream stream = connection.createStream(true);

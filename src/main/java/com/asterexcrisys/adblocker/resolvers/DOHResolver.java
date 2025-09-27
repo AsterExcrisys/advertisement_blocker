@@ -25,8 +25,8 @@ public final class DOHResolver implements Resolver, AutoCloseable {
         this.nameServer = Objects.requireNonNull(nameServer);
         queryEndpoint = "dns-query";
         client = new OkHttpClient.Builder()
-                .callTimeout(Duration.ofSeconds(5))
                 .connectTimeout(Duration.ofSeconds(3))
+                .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
                 .build();
@@ -37,8 +37,8 @@ public final class DOHResolver implements Resolver, AutoCloseable {
         this.nameServer = Objects.requireNonNull(nameServer);
         queryEndpoint = "dns-query";
         client = new OkHttpClient.Builder()
-                .callTimeout(Duration.ofSeconds(5))
                 .connectTimeout(Duration.ofSeconds(3))
+                .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
                 .build();
@@ -49,8 +49,8 @@ public final class DOHResolver implements Resolver, AutoCloseable {
         this.nameServer = Objects.requireNonNull(nameServer);
         this.queryEndpoint = Objects.requireNonNull(queryEndpoint);
         client = new OkHttpClient.Builder()
-                .callTimeout(Duration.ofSeconds(5))
                 .connectTimeout(Duration.ofSeconds(3))
+                .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
                 .build();

@@ -6,6 +6,7 @@ import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +28,7 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
                 throw new IllegalArgumentException("No question found");
             }
             ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
+            resolver.setTimeout(Duration.ofMillis(5000));
             resolver.loadTrustAnchors(new ByteArrayInputStream(trustAnchor.getBytes(StandardCharsets.UTF_8)));
             OPTRecord record = request.getOPT();
             boolean isSecure;
