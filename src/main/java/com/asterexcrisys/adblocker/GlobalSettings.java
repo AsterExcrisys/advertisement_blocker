@@ -2,6 +2,7 @@ package com.asterexcrisys.adblocker;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@SuppressWarnings("unused")
 public final class GlobalSettings {
 
     private static volatile GlobalSettings INSTANCE;

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+@SuppressWarnings("unused")
 public class TCPReader extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPReader.class);

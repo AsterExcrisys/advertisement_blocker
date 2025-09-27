@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
+@SuppressWarnings("unused")
 public class TCPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPHandler.class);
@@ -60,7 +61,7 @@ public class TCPHandler implements Runnable {
             LOGGER.error("Failed to handle TCP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         } finally {
-            context.remove();
+            context.clear();
             local.remove();
         }
     }

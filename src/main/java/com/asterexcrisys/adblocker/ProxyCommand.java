@@ -38,14 +38,17 @@ public class ProxyCommand implements Callable<Integer> {
     @Parameters(index = "1", description = "The path to the file containing a list of filtered domains (one per line).", arity = "1")
     private File filteredDomains;
 
+    @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
+    private int serverPort;
+
+    @Option(names = {"-sr", "--should-retry"}, description = "The flag to signal the proxy whether it should retry failed requests (RC != NO_ERROR) with all the available resolvers (optional).", defaultValue = "false")
+    private boolean shouldRetry;
+
     @Option(names = {"-wl", "--is-whitelist"}, description = "The flag to signal the proxy whether it should use a blacklist or whitelist filter (optional).", defaultValue = "false")
     private boolean isWhitelist;
 
     @Option(names = {"-wc", "--is-wildcard"}, description = "The flag to signal the proxy whether it should use an exact or a wildcard matcher (optional).", defaultValue = "false")
     private boolean isWildcard;
-
-    @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
-    private int serverPort;
 
     @Option(names = {"-cl", "--cache-limit"}, description = "The cache limit of the proxy for DNS responses (optional).", defaultValue = "1000")
     private int cacheLimit;
@@ -161,7 +164,7 @@ public class ProxyCommand implements Callable<Integer> {
 
     public ThreadContext initializeContext() throws IOException {
         ReentrantLock lock = new ReentrantLock();
-        ProxyManager manager = new ProxyManager();
+        ProxyManager manager = new ProxyManager(shouldRetry);
         manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
         manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
         manager.addResolvers(CommandUtility.parseNameServers(nameServers));

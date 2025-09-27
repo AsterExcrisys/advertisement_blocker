@@ -3,6 +3,7 @@ package com.asterexcrisys.adblocker.types;
 import java.net.Socket;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public record TCPPacket(Socket socket, byte[] data) {
 
     public TCPPacket {

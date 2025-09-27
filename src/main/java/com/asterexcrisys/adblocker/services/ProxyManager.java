@@ -9,19 +9,31 @@ import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class ProxyManager {
 
+    private final boolean isRetryingEnabled;
     private final Set<Resolver> resolvers;
     private final DNSCache cache;
     private Filter filter;
 
     public ProxyManager() {
-        resolvers = ConcurrentHashMap.newKeySet();
+        isRetryingEnabled = false;
+        resolvers = new HashSet<>();
         cache = new DNSCache();
         filter = new BlacklistFilter();
+    }
+
+    public ProxyManager(boolean isRetryingEnabled) {
+        this.isRetryingEnabled = isRetryingEnabled;
+        resolvers = new HashSet<>();
+        cache = new DNSCache();
+        filter = new BlacklistFilter();
+    }
+
+    public boolean isRetryingEnabled() {
+        return isRetryingEnabled;
     }
 
     public void addResolver(Resolver resolver) {
@@ -118,6 +130,9 @@ public class ProxyManager {
         );
         for (Resolver resolver : resolvers) {
             response = resolver.resolve(request);
+            if (!isRetryingEnabled) {
+                break;
+            }
             if (response.getHeader().getRcode() == Rcode.NOERROR) {
                 break;
             }

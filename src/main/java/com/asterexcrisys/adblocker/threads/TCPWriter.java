@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 
+@SuppressWarnings("unused")
 public class TCPWriter extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPWriter.class);

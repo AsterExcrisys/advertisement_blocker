@@ -4,6 +4,7 @@ import com.asterexcrisys.adblocker.services.ProxyManager;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
+@SuppressWarnings("unused")
 public record ThreadContext(ReentrantLock lock, ProxyManager manager) {
 
     public ThreadContext {
@@ -11,7 +12,7 @@ public record ThreadContext(ReentrantLock lock, ProxyManager manager) {
         Objects.requireNonNull(manager);
     }
 
-    public void remove() {
+    public void clear() {
         lock.unlock();
         manager.clearResolvers();
         manager.clearFilteredDomains();
