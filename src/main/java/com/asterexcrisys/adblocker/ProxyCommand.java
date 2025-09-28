@@ -5,7 +5,9 @@ import com.asterexcrisys.adblocker.filters.WhitelistFilter;
 import com.asterexcrisys.adblocker.matchers.ExactMatcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.services.TaskDispatcher;
 import com.asterexcrisys.adblocker.tasks.*;
+import com.asterexcrisys.adblocker.types.ServerMode;
 import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
@@ -19,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -37,6 +38,9 @@ public class ProxyCommand implements Callable<Integer> {
 
     @Parameters(index = "1", description = "The path to the file containing a list of filtered domains (one per line).", arity = "1")
     private File filteredDomains;
+
+    @Option(names = {"-sm", "--server-mode"}, description = "The mode of the server to use for receiving requests (either UDP-only, TCP-only, or both) (optional).", defaultValue = "BOTH")
+    private ServerMode serverMode;
 
     @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
     private int serverPort;
@@ -73,6 +77,9 @@ public class ProxyCommand implements Callable<Integer> {
         if (!filteredDomains.exists() || !filteredDomains.isFile()) {
             throw new IllegalArgumentException("filtered domains must be a file");
         }
+        if (serverMode == null) {
+            throw new IllegalArgumentException("server mode must be specified as either 'UDP', 'TCP', or 'BOTH'");
+        }
         if (serverPort < 1 || serverPort > 65535) {
             throw new IllegalArgumentException("server port must be in the range [1, 65535]");
         }
@@ -97,6 +104,7 @@ public class ProxyCommand implements Callable<Integer> {
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
         try (
                 ExecutorService executor = initializeExecutor();
+                ScheduledExecutorService scheduler = initializeScheduler();
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
                 ServerSocket tcpSocket = new ServerSocket(serverPort);
         ) {
@@ -117,7 +125,7 @@ public class ProxyCommand implements Callable<Integer> {
             BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
             Thread udpReader = new UDPReader(udpSocket, udpRequests);
             Thread udpWriter = new UDPWriter(udpSocket, udpResponses);
-            List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
+            final List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
             udpReader.setDaemon(true);
             udpReader.start();
             udpWriter.setDaemon(true);
@@ -126,25 +134,17 @@ public class ProxyCommand implements Callable<Integer> {
                 udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
             }
             LOGGER.info("DNS Ad-Blocking Proxy started on port {}", serverPort);
-            while (!Thread.currentThread().isInterrupted()) {
-                Thread.sleep(Duration.ofMillis(10000));
-                if (udpRequests.size() < udpHandlers.size() * (requestsLimit - 10)) {
-                    if (udpHandlers.size() == minimumTasks) {
-                        continue;
-                    }
-                    udpHandlers.getLast().cancel(true);
-                    udpHandlers.removeLast();
-                    LOGGER.info("The last handler thread dispatch was reverted");
-                    continue;
-                }
-                if (udpRequests.size() > (udpHandlers.size() + 1) * (requestsLimit + 10)) {
-                    if (udpHandlers.size() == maximumTasks) {
-                        continue;
-                    }
-                    udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
-                    LOGGER.info("A new handler thread was dispatched");
-                }
-            }
+            scheduler.scheduleWithFixedDelay(new TaskDispatcher(
+                    executor,
+                    udpRequests,
+                    udpResponses,
+                    udpHandlers,
+                    contextManager,
+                    requestsLimit,
+                    minimumTasks,
+                    maximumTasks
+            ), 10000, 10000, TimeUnit.MILLISECONDS);
+            Thread.currentThread().join();
             return ExitCode.OK;
         } finally {
             Thread.currentThread().interrupt();
@@ -161,6 +161,14 @@ public class ProxyCommand implements Callable<Integer> {
                 Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
+    }
+
+    public ScheduledExecutorService initializeScheduler() {
+        return Executors.newSingleThreadScheduledExecutor((task) -> {
+            Thread thread = new Thread(task);
+            thread.setDaemon(false);
+            return thread;
+        });
     }
 
     public ThreadContext initializeContext() throws IOException {
