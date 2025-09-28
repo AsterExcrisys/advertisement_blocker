@@ -4,30 +4,33 @@ import com.asterexcrisys.adblocker.filters.BlacklistFilter;
 import com.asterexcrisys.adblocker.filters.Filter;
 import com.asterexcrisys.adblocker.matchers.Matcher;
 import com.asterexcrisys.adblocker.resolvers.Resolver;
+import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
+import java.time.Duration;
 import java.util.*;
 
 @SuppressWarnings("unused")
 public class ProxyManager {
 
     private final boolean isRetryingEnabled;
-    private final Set<Resolver> resolvers;
+    private final Map<Resolver, CircuitBreaker> resolvers;
     private final DNSCache cache;
     private Filter filter;
 
     public ProxyManager() {
         isRetryingEnabled = false;
-        resolvers = new HashSet<>();
+        resolvers = new HashMap<>();
         cache = new DNSCache();
         filter = new BlacklistFilter();
     }
 
     public ProxyManager(boolean isRetryingEnabled) {
         this.isRetryingEnabled = isRetryingEnabled;
-        resolvers = new HashSet<>();
+        resolvers = new HashMap<>();
         cache = new DNSCache();
         filter = new BlacklistFilter();
     }
@@ -40,14 +43,30 @@ public class ProxyManager {
         if (resolver == null) {
             throw new IllegalArgumentException();
         }
-        resolvers.add(resolver);
+        resolvers.put(resolver, GlobalUtility.buildCircuitBreaker(
+                20,
+                10,
+                10,
+                50,
+                Duration.ofMillis(60000),
+                Duration.ofMillis(20000)
+        ));
     }
 
     public void addResolvers(Collection<Resolver> resolvers) {
         if (resolvers == null || resolvers.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException();
         }
-        this.resolvers.addAll(resolvers);
+        for (Resolver resolver : resolvers) {
+            this.resolvers.put(resolver, GlobalUtility.buildCircuitBreaker(
+                    20,
+                    10,
+                    10,
+                    50,
+                    Duration.ofMillis(60000),
+                    Duration.ofMillis(20000)
+            ));
+        }
     }
 
     public void removeResolver(Resolver resolver) {
@@ -61,7 +80,9 @@ public class ProxyManager {
         if (resolvers == null || resolvers.stream().allMatch(Objects::isNull)) {
             return;
         }
-        this.resolvers.removeAll(resolvers);
+        for (Resolver resolver : resolvers) {
+            this.resolvers.remove(resolver);
+        }
     }
 
     public void clearResolvers() {
@@ -126,14 +147,17 @@ public class ProxyManager {
                 request,
                 15,
                 15,
-                "No resolvers were found"
+                "No available resolvers were found"
         );
-        for (Resolver resolver : resolvers) {
-            response = resolver.resolve(request);
+        for (Map.Entry<Resolver, CircuitBreaker> entry : resolvers.entrySet()) {
+            if (entry.getValue().getState() != CircuitBreaker.State.CLOSED && entry.getValue().getState() != CircuitBreaker.State.HALF_OPEN) {
+                continue;
+            }
+            response = entry.getValue().executeSupplier(() -> entry.getKey().resolve(request));
             if (!isRetryingEnabled) {
                 break;
             }
-            if (response.getHeader().getRcode() == Rcode.NOERROR) {
+            if (response.getHeader().getRcode() != Rcode.SERVFAIL) {
                 break;
             }
         }

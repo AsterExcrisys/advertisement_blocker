@@ -1,6 +1,12 @@
 package com.asterexcrisys.adblocker.utility;
 
 import com.asterexcrisys.adblocker.GlobalSettings;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import org.xbill.DNS.Message;
+import org.xbill.DNS.Rcode;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +49,26 @@ public final class GlobalUtility {
             list.add(supplier.get());
         }
         return list;
+    }
+
+    public static CircuitBreaker buildCircuitBreaker(int windowSize, int minimumCalls, int maximumCalls, float rateThreshold, Duration timeoutDuration, Duration recoveryDuration) {
+        CircuitBreakerConfig configuration = CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.TIME_BASED)
+                .slidingWindowSize(windowSize)
+                .minimumNumberOfCalls(minimumCalls)
+                .permittedNumberOfCallsInHalfOpenState(maximumCalls)
+                .failureRateThreshold(rateThreshold)
+                .waitDurationInOpenState(timeoutDuration)
+                .maxWaitDurationInHalfOpenState(recoveryDuration)
+                .enableAutomaticTransitionFromOpenToHalfOpen()
+                .recordResult((result) -> {
+                    if (result instanceof Message message) {
+                        return message.getHeader().getRcode() == Rcode.SERVFAIL;
+                    }
+                    return false;
+                }).build();
+        CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(configuration);
+        return registry.circuitBreaker("resolver_circuit_breaker");
     }
 
 }

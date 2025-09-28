@@ -8,6 +8,7 @@ import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.services.TaskDispatcher;
 import com.asterexcrisys.adblocker.tasks.*;
 import com.asterexcrisys.adblocker.types.ServerMode;
+import com.asterexcrisys.adblocker.types.TCPPacket;
 import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
@@ -39,7 +40,7 @@ public class ProxyCommand implements Callable<Integer> {
     @Parameters(index = "1", description = "The path to the file containing a list of filtered domains (one per line).", arity = "1")
     private File filteredDomains;
 
-    @Option(names = {"-sm", "--server-mode"}, description = "The mode of the server to use for receiving requests (either UDP-only, TCP-only, or both) (optional).", defaultValue = "BOTH")
+    @Option(names = {"-sm", "--server-mode"}, description = "The mode of the server to use for receiving requests (either UDP-only, TCP-only, or both) (optional).", defaultValue = "UDP")
     private ServerMode serverMode;
 
     @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
@@ -123,22 +124,43 @@ public class ProxyCommand implements Callable<Integer> {
             });
             BlockingQueue<UDPPacket> udpRequests = new LinkedBlockingQueue<>();
             BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
-            Thread udpReader = new UDPReader(udpSocket, udpRequests);
-            Thread udpWriter = new UDPWriter(udpSocket, udpResponses);
+            BlockingQueue<TCPPacket> tcpRequests = new LinkedBlockingQueue<>();
+            BlockingQueue<TCPPacket> tcpResponses = new LinkedBlockingQueue<>();
+            List<Thread> readers = new ArrayList<>(1);
+            List<Thread> writers = new ArrayList<>(1);
             final List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
-            udpReader.setDaemon(true);
-            udpReader.start();
-            udpWriter.setDaemon(true);
-            udpWriter.start();
-            for (int i = 0; i < minimumTasks; i++) {
-                udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
+            final List<Future<?>> tcpHandlers = new ArrayList<>(minimumTasks);
+            if (serverMode == ServerMode.UDP || serverMode == ServerMode.BOTH) {
+                readers.add(new UDPReader(udpSocket, udpRequests));
+                writers.add(new UDPWriter(udpSocket, udpResponses));
             }
-            LOGGER.info("DNS Ad-Blocking Proxy started on port {}", serverPort);
+            if (serverMode == ServerMode.TCP || serverMode == ServerMode.BOTH) {
+                readers.add(new TCPReader(tcpSocket, tcpRequests));
+                writers.add(new TCPWriter(tcpResponses));
+            }
+            for (int i = 0; i < readers.size(); i++) {
+                readers.get(i).setDaemon(true);
+                readers.get(i).start();
+                writers.get(i).setDaemon(true);
+                writers.get(i).start();
+            }
+            for (int i = 0; i < minimumTasks; i++) {
+                if (serverMode == ServerMode.UDP || serverMode == ServerMode.BOTH) {
+                    udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
+                }
+                if (serverMode == ServerMode.TCP || serverMode == ServerMode.BOTH) {
+                    tcpHandlers.add(executor.submit(new TCPHandler(contextManager, tcpRequests, tcpResponses)));
+                }
+            }
+            LOGGER.info("DNS Ad-Blocking Proxy with mode '{}' started on port {}", serverMode, serverPort);
             scheduler.scheduleWithFixedDelay(new TaskDispatcher(
                     executor,
                     udpRequests,
                     udpResponses,
+                    tcpRequests,
+                    tcpResponses,
                     udpHandlers,
+                    tcpHandlers,
                     contextManager,
                     requestsLimit,
                     minimumTasks,

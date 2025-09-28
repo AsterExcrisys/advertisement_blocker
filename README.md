@@ -60,6 +60,7 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 |----------------------------|-------------------|---------------------------------------------------------------------------------------|-------------|
 | `0`                        | *nameServers*     | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
 | `1`                        | *filteredDomains* | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
+| `-sm`, `--server-mode`     | *serverMode*      | The mode of the server to use for receiving requests.                                 | `UDP`       |
 | `-sp`, `--server-port`     | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
 | `-sr`, `--should-retry`    | *shouldRetry*     | Flag to indicate if the proxy should use a retry mechanism with failed requests.      | `false`     |
 | `-wl`, `--is-whitelist`    | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
