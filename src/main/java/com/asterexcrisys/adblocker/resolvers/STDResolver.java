@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.DNSUtility;
+import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import java.time.Duration;
@@ -36,7 +36,7 @@ public record STDResolver(String nameServer) implements Resolver {
             }
             return resolver.send(request);
         } catch (Exception exception) {
-            return DNSUtility.buildErrorResponse(
+            return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,

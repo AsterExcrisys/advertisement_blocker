@@ -5,9 +5,7 @@ import com.asterexcrisys.adblocker.filters.WhitelistFilter;
 import com.asterexcrisys.adblocker.matchers.ExactMatcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import com.asterexcrisys.adblocker.services.ProxyManager;
-import com.asterexcrisys.adblocker.threads.UDPHandler;
-import com.asterexcrisys.adblocker.threads.UDPReader;
-import com.asterexcrisys.adblocker.threads.UDPWriter;
+import com.asterexcrisys.adblocker.tasks.*;
 import com.asterexcrisys.adblocker.types.ThreadContext;
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
@@ -20,6 +18,8 @@ import picocli.CommandLine.Parameters;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.ServerSocket;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -97,50 +97,51 @@ public class ProxyCommand implements Callable<Integer> {
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
         try (
                 ExecutorService executor = initializeExecutor();
-                DatagramSocket socket = new DatagramSocket(serverPort)
+                DatagramSocket udpSocket = new DatagramSocket(serverPort);
+                ServerSocket tcpSocket = new ServerSocket(serverPort);
         ) {
-            final int poolSize = Math.min(
+            final int contextPoolSize = Math.min(
                     Math.max(Math.floorDiv(maximumTasks, 5), 1),
                     Runtime.getRuntime().availableProcessors()
             );
-            final ThreadContext[] contexts = new ThreadContext[poolSize];
-            for (int i = 0; i < poolSize; i++) {
-                contexts[i] = initializeContext();
+            final ThreadContext[] availableContexts = new ThreadContext[contextPoolSize];
+            for (int i = 0; i < contextPoolSize; i++) {
+                availableContexts[i] = initializeContext();
             }
-            AtomicInteger counter = new AtomicInteger(0);
-            ThreadLocal<ThreadContext> local = ThreadLocal.withInitial(() -> {
-                int index = counter.getAndIncrement() % poolSize;
-                return contexts[index];
+            AtomicInteger taskCounter = new AtomicInteger(0);
+            ThreadLocal<ThreadContext> contextManager = ThreadLocal.withInitial(() -> {
+                int contextIndex = taskCounter.getAndIncrement() % contextPoolSize;
+                return availableContexts[contextIndex];
             });
-            BlockingQueue<UDPPacket> requests = new LinkedBlockingQueue<>();
-            BlockingQueue<UDPPacket> responses = new LinkedBlockingQueue<>();
-            Thread reader = new UDPReader(socket, requests);
-            Thread writer = new UDPWriter(socket, responses);
-            List<Future<?>> handlers = new ArrayList<>(minimumTasks);
-            reader.setDaemon(true);
-            reader.start();
-            writer.setDaemon(true);
-            writer.start();
+            BlockingQueue<UDPPacket> udpRequests = new LinkedBlockingQueue<>();
+            BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
+            Thread udpReader = new UDPReader(udpSocket, udpRequests);
+            Thread udpWriter = new UDPWriter(udpSocket, udpResponses);
+            List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
+            udpReader.setDaemon(true);
+            udpReader.start();
+            udpWriter.setDaemon(true);
+            udpWriter.start();
             for (int i = 0; i < minimumTasks; i++) {
-                handlers.add(executor.submit(new UDPHandler(local, requests, responses)));
+                udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
             }
             LOGGER.info("DNS Ad-Blocking Proxy started on port {}", serverPort);
             while (!Thread.currentThread().isInterrupted()) {
-                Thread.sleep(10000);
-                if (requests.size() < handlers.size() * (requestsLimit - 10)) {
-                    if (handlers.size() == minimumTasks) {
+                Thread.sleep(Duration.ofMillis(10000));
+                if (udpRequests.size() < udpHandlers.size() * (requestsLimit - 10)) {
+                    if (udpHandlers.size() == minimumTasks) {
                         continue;
                     }
-                    handlers.getLast().cancel(true);
-                    handlers.removeLast();
+                    udpHandlers.getLast().cancel(true);
+                    udpHandlers.removeLast();
                     LOGGER.info("The last handler thread dispatch was reverted");
                     continue;
                 }
-                if (requests.size() > (handlers.size() + 1) * (requestsLimit + 10)) {
-                    if (handlers.size() == maximumTasks) {
+                if (udpRequests.size() > (udpHandlers.size() + 1) * (requestsLimit + 10)) {
+                    if (udpHandlers.size() == maximumTasks) {
                         continue;
                     }
-                    handlers.add(executor.submit(new UDPHandler(local, requests, responses)));
+                    udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
                     LOGGER.info("A new handler thread was dispatched");
                 }
             }

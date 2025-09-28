@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.types;
+package com.asterexcrisys.adblocker.services;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,13 +6,13 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public class Trie {
+public class DomainTrie {
 
-    private final TrieNode root;
+    private final DomainTrieNode root;
     private final String wildcard;
 
-    public Trie(String prefix, String wildcard) {
-        root = TrieNode.of(Objects.requireNonNull(prefix), new HashMap<>());
+    public DomainTrie(String prefix, String wildcard) {
+        root = DomainTrieNode.of(Objects.requireNonNull(prefix), new HashMap<>());
         this.wildcard = Objects.requireNonNull(wildcard);
     }
 
@@ -32,9 +32,9 @@ public class Trie {
             throw new IllegalArgumentException();
         }
         String[] parts = ignoreBlankParts(ignoreTriePrefix(word), separator);
-        TrieNode current = root;
+        DomainTrieNode current = root;
         for (String part : parts) {
-            current.children().putIfAbsent(part, TrieNode.of(part, new HashMap<>()));
+            current.children().putIfAbsent(part, DomainTrieNode.of(part, new HashMap<>()));
             current = current.children().get(part);
         }
     }
@@ -62,25 +62,25 @@ public class Trie {
         return Stream.of(word.split(separator)).filter(String::isBlank).toArray(String[]::new);
     }
 
-    private boolean has(TrieNode current, String[] parts, int index) {
+    private boolean has(DomainTrieNode current, String[] parts, int index) {
         if (index == parts.length) {
             return current.children().isEmpty();
         }
         String part = parts[index];
-        TrieNode exact = current.children().get(part);
-        TrieNode wildcard = current.children().get(this.wildcard);
+        DomainTrieNode exact = current.children().get(part);
+        DomainTrieNode wildcard = current.children().get(this.wildcard);
         if (exact != null && has(exact, parts, index + 1)) {
             return true;
         }
         return wildcard != null && has(wildcard, parts, index + 1);
     }
 
-    private boolean remove(TrieNode current, String[] parts, int index) {
+    private boolean remove(DomainTrieNode current, String[] parts, int index) {
         if (index == parts.length) {
             return current.children().isEmpty();
         }
         String part = parts[index];
-        TrieNode child = current.children().get(part);
+        DomainTrieNode child = current.children().get(part);
         if (child == null) {
             return false;
         }
@@ -95,15 +95,15 @@ public class Trie {
 }
 
 @SuppressWarnings("unused")
-record TrieNode(String label, Map<String, TrieNode> children) implements Comparable<TrieNode> {
+record DomainTrieNode(String label, Map<String, DomainTrieNode> children) implements Comparable<DomainTrieNode> {
 
     @Override
-    public int compareTo(TrieNode other) {
+    public int compareTo(DomainTrieNode other) {
         return label.compareTo(other.label);
     }
 
-    public static TrieNode of(String label, Map<String, TrieNode> children) {
-        return new TrieNode(label, children);
+    public static DomainTrieNode of(String label, Map<String, DomainTrieNode> children) {
+        return new DomainTrieNode(label, children);
     }
 
 }

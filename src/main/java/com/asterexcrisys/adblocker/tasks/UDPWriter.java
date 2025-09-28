@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.threads;
+package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.types.UDPPacket;
 import org.slf4j.Logger;

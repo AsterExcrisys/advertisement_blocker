@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.threads;
+package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.types.ThreadContext;
@@ -16,14 +16,14 @@ public class UDPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UDPHandler.class);
 
-    private final ThreadLocal<ThreadContext> local;
+    private final ThreadLocal<ThreadContext> contextManager;
     private final ThreadContext context;
     private final BlockingQueue<UDPPacket> requests;
     private final BlockingQueue<UDPPacket> responses;
 
-    public UDPHandler(ThreadLocal<ThreadContext> local, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
-        this.local = Objects.requireNonNull(local);
-        this.context = Objects.requireNonNull(local.get());
+    public UDPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
+        this.contextManager = Objects.requireNonNull(contextManager);
+        this.context = Objects.requireNonNull(contextManager.get());
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -53,7 +53,7 @@ public class UDPHandler implements Runnable {
             Thread.currentThread().interrupt();
         } finally {
             context.clear();
-            local.remove();
+            contextManager.remove();
         }
     }
 

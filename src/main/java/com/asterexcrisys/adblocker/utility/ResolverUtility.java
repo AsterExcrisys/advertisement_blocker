@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
-public final class DNSUtility {
+public final class ResolverUtility {
 
     public static void updatePayloadSize(Message request) {
         OPTRecord oldRecord = request.getOPT();

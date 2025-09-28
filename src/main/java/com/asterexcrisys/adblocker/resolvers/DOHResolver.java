@@ -1,7 +1,7 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.types.HttpMethod;
-import com.asterexcrisys.adblocker.utility.DNSUtility;
+import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
@@ -71,7 +71,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
     @Override
     public Message resolve(Message request) {
         try {
-            DNSUtility.updatePayloadSize(request);
+            ResolverUtility.updatePayloadSize(request);
             Request httpRequest;
             if (httpMethod == HttpMethod.GET) {
                 httpRequest = buildGetRequest(request);
@@ -85,7 +85,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
                 return new Message(httpResponse.body().bytes());
             }
         } catch (Exception exception) {
-            return DNSUtility.buildErrorResponse(
+            return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,

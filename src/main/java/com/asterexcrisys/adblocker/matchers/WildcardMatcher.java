@@ -1,17 +1,17 @@
 package com.asterexcrisys.adblocker.matchers;
 
-import com.asterexcrisys.adblocker.types.Trie;
+import com.asterexcrisys.adblocker.services.DomainTrie;
 
 @SuppressWarnings("unused")
 public final class WildcardMatcher implements Matcher {
 
-    private final Trie list;
+    private final DomainTrie list;
 
     public WildcardMatcher() {
-        list = new Trie("www", "*");
+        list = new DomainTrie("www", "*");
     }
 
-    public Trie list() {
+    public DomainTrie list() {
         return list;
     }
 

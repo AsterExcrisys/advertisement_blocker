@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.threads;
+package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.types.TCPPacket;
@@ -17,14 +17,14 @@ public class TCPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TCPHandler.class);
 
-    private final ThreadLocal<ThreadContext> local;
+    private final ThreadLocal<ThreadContext> contextManager;
     private final ThreadContext context;
     private final BlockingQueue<TCPPacket> requests;
     private final BlockingQueue<TCPPacket> responses;
 
-    public TCPHandler(ThreadLocal<ThreadContext> local, BlockingQueue<TCPPacket> requests, BlockingQueue<TCPPacket> responses) {
-        this.local = Objects.requireNonNull(local);
-        this.context = Objects.requireNonNull(local.get());
+    public TCPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<TCPPacket> requests, BlockingQueue<TCPPacket> responses) {
+        this.contextManager = Objects.requireNonNull(contextManager);
+        this.context = Objects.requireNonNull(contextManager.get());
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -62,7 +62,7 @@ public class TCPHandler implements Runnable {
             Thread.currentThread().interrupt();
         } finally {
             context.clear();
-            local.remove();
+            contextManager.remove();
         }
     }
 

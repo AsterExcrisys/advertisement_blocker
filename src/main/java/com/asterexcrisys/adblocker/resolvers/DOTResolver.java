@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.DNSUtility;
+import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import javax.net.ssl.SSLSocketFactory;
@@ -42,7 +42,7 @@ public final class DOTResolver implements Resolver {
             socket.setSoTimeout(5000);
             OutputStream output = socket.getOutputStream();
             InputStream input = socket.getInputStream();
-            DNSUtility.updatePayloadSize(request);
+            ResolverUtility.updatePayloadSize(request);
             byte[] data = request.toWire();
             output.write((data.length >> 8) & 0xFF);
             output.write(data.length & 0xFF);
@@ -51,7 +51,7 @@ public final class DOTResolver implements Resolver {
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
         } catch (Exception exception) {
-            return DNSUtility.buildErrorResponse(
+            return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     2,
