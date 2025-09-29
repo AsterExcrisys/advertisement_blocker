@@ -7,6 +7,7 @@ import com.asterexcrisys.adblocker.resolvers.Resolver;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker.State;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Name;
 import org.xbill.DNS.Rcode;
@@ -150,7 +151,7 @@ public class ProxyManager {
                 "No available resolvers were found"
         );
         for (Map.Entry<Resolver, CircuitBreaker> entry : resolvers.entrySet()) {
-            if (entry.getValue().getState() != CircuitBreaker.State.CLOSED && entry.getValue().getState() != CircuitBreaker.State.HALF_OPEN) {
+            if (entry.getValue().getState() != State.CLOSED && entry.getValue().getState() != State.HALF_OPEN) {
                 continue;
             }
             response = entry.getValue().executeSupplier(() -> entry.getKey().resolve(request));
