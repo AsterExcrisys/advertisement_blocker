@@ -52,7 +52,6 @@ public class UDPHandler implements Runnable {
             LOGGER.error("Failed to handle UDP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         } finally {
-            context.clear();
             contextManager.remove();
         }
     }

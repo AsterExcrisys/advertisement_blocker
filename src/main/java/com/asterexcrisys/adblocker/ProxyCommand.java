@@ -103,25 +103,25 @@ public class ProxyCommand implements Callable<Integer> {
             throw new IllegalArgumentException("minimum tasks must not exceed maximum tasks");
         }
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
+        final int contextPoolSize = Math.min(
+                Math.max(Math.floorDiv(maximumTasks, 5), 1),
+                Runtime.getRuntime().availableProcessors()
+        );
+        final ThreadContext[] availableContexts = new ThreadContext[contextPoolSize];
+        for (int i = 0; i < contextPoolSize; i++) {
+            availableContexts[i] = initializeContext();
+        }
+        AtomicInteger taskCounter = new AtomicInteger(0);
+        ThreadLocal<ThreadContext> contextManager = ThreadLocal.withInitial(() -> {
+            int contextIndex = taskCounter.getAndIncrement() % contextPoolSize;
+            return availableContexts[contextIndex];
+        });
         try (
                 ExecutorService executor = initializeExecutor();
                 ScheduledExecutorService scheduler = initializeScheduler();
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
                 ServerSocket tcpSocket = new ServerSocket(serverPort);
         ) {
-            final int contextPoolSize = Math.min(
-                    Math.max(Math.floorDiv(maximumTasks, 5), 1),
-                    Runtime.getRuntime().availableProcessors()
-            );
-            final ThreadContext[] availableContexts = new ThreadContext[contextPoolSize];
-            for (int i = 0; i < contextPoolSize; i++) {
-                availableContexts[i] = initializeContext();
-            }
-            AtomicInteger taskCounter = new AtomicInteger(0);
-            ThreadLocal<ThreadContext> contextManager = ThreadLocal.withInitial(() -> {
-                int contextIndex = taskCounter.getAndIncrement() % contextPoolSize;
-                return availableContexts[contextIndex];
-            });
             BlockingQueue<UDPPacket> udpRequests = new LinkedBlockingQueue<>();
             BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
             BlockingQueue<TCPPacket> tcpRequests = new LinkedBlockingQueue<>();
@@ -168,8 +168,15 @@ public class ProxyCommand implements Callable<Integer> {
             ), 10000, 10000, TimeUnit.MILLISECONDS);
             Thread.currentThread().join();
             return ExitCode.OK;
-        } finally {
+        } catch (InterruptedException exception) {
+            LOGGER.info("DNS Ad-Blocking Proxy is starting the shutdown sequence due to: {}", exception.getMessage());
             Thread.currentThread().interrupt();
+            return ExitCode.SOFTWARE;
+        } finally {
+            for (int i = 0; i < contextPoolSize; i++) {
+                availableContexts[i].clear();
+            }
+            contextManager.remove();
         }
     }
 

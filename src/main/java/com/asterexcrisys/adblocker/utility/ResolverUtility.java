@@ -3,19 +3,35 @@ package com.asterexcrisys.adblocker.utility;
 import org.xbill.DNS.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 @SuppressWarnings("unused")
 public final class ResolverUtility {
 
+    public static boolean validateRequest(Message request) {
+        if (request == null) {
+            return false;
+        }
+        if (request.getHeader() == null) {
+            return false;
+        }
+        return request.getQuestion() != null;
+    }
+
     public static void updatePayloadSize(Message request) {
         OPTRecord oldRecord = request.getOPT();
-        OPTRecord newRecord = new OPTRecord(
-                4096,
-                oldRecord.getExtendedRcode(),
-                oldRecord.getVersion(),
-                oldRecord.getFlags(),
-                oldRecord.getOptions()
-        );
+        OPTRecord newRecord;
+        if (oldRecord != null) {
+            newRecord = new OPTRecord(
+                    4096,
+                    oldRecord.getExtendedRcode(),
+                    oldRecord.getVersion(),
+                    oldRecord.getFlags(),
+                    oldRecord.getOptions()
+            );
+        } else {
+            newRecord = new OPTRecord(4096, 0, 0, 0, Collections.emptyList());
+        }
         request.removeAllRecords(Section.ADDITIONAL);
         request.addRecord(newRecord, Section.ADDITIONAL);
     }
@@ -25,8 +41,7 @@ public final class ResolverUtility {
         response.getHeader().setFlag(Flags.QR);
         response.getHeader().setRcode(statusCode);
         OPTRecord record = new OPTRecord(
-                4096, 0, 0, 0,
-                new GenericEDNSOption(15, buildAdditionalData(optionCode, optionMessage))
+                4096, 0, 0, 0, new GenericEDNSOption(15, buildAdditionalData(optionCode, optionMessage))
         );
         response.addRecord(request.getQuestion(), Section.QUESTION);
         response.addRecord(record, Section.ADDITIONAL);

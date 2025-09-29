@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public final class DOHResolver implements Resolver, AutoCloseable {
+public final class DOHResolver implements Resolver {
 
     private static final MediaType MEDIA_TYPE = MediaType.get("application/dns-message");
 
@@ -70,6 +70,14 @@ public final class DOHResolver implements Resolver, AutoCloseable {
 
     @Override
     public Message resolve(Message request) {
+        if (!ResolverUtility.validateRequest(request)) {
+            return ResolverUtility.buildErrorResponse(
+                    request,
+                    Rcode.FORMERR,
+                    400,
+                    "Failed to resolve the DNS query: request must have a header and question field to be considered valid"
+            );
+        }
         try {
             ResolverUtility.updatePayloadSize(request);
             Request httpRequest;
@@ -88,7 +96,7 @@ public final class DOHResolver implements Resolver, AutoCloseable {
             return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
-                    2,
+                    500,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }

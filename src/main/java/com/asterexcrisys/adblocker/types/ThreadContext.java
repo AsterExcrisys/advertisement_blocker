@@ -12,10 +12,11 @@ public record ThreadContext(ReentrantLock lock, ProxyManager manager) {
         Objects.requireNonNull(manager);
     }
 
-    public void clear() {
+    public void clear() throws Exception {
         lock.unlock();
         manager.clearResolvers();
         manager.clearFilteredDomains();
+        manager.close();
     }
 
     public static ThreadContext of(ReentrantLock lock, ProxyManager manager) {

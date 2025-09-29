@@ -18,10 +18,10 @@ public class DomainTrie {
 
     public boolean has(String word, String separator) {
         if (word == null || word.isBlank() || separator == null || separator.isBlank()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("word and separator must not be null, empty, or blank");
         }
         if (word.contains(wildcard)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("word must not contain the wildcard");
         }
         String[] parts = ignoreBlankParts(ignoreTriePrefix(word), separator);
         return has(root, parts, 0);
@@ -29,7 +29,7 @@ public class DomainTrie {
 
     public void add(String word, String separator) {
         if (word == null || word.isBlank() || separator == null || separator.isBlank()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("word and separator must not be null, empty, or blank");
         }
         String[] parts = ignoreBlankParts(ignoreTriePrefix(word), separator);
         DomainTrieNode current = root;
@@ -41,7 +41,7 @@ public class DomainTrie {
 
     public void remove(String word, String separator) {
         if (word == null || word.isBlank() || separator == null || separator.isBlank()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("word and separator must not be null, empty, or blank");
         }
         String[] parts = ignoreBlankParts(ignoreTriePrefix(word), separator);
         remove(root, parts, 0);
@@ -96,6 +96,11 @@ public class DomainTrie {
 
 @SuppressWarnings("unused")
 record DomainTrieNode(String label, Map<String, DomainTrieNode> children) implements Comparable<DomainTrieNode> {
+
+    public DomainTrieNode {
+        Objects.requireNonNull(label);
+        Objects.requireNonNull(children);
+    }
 
     @Override
     public int compareTo(DomainTrieNode other) {

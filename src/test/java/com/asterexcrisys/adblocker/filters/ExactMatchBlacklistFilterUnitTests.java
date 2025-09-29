@@ -1,0 +1,41 @@
+package com.asterexcrisys.adblocker.filters;
+
+import com.asterexcrisys.adblocker.matchers.ExactMatcher;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import java.util.List;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class ExactMatchBlacklistFilterUnitTests {
+
+    private Filter filter;
+
+    @BeforeAll
+    public void setUp() {
+        filter = new BlacklistFilter();
+        filter.setMatcher(new ExactMatcher());
+        filter.load(List.of(
+                "google.com", "youtube.com", "facebook.com",
+                "apple.com", "amazon.com", "microsoft.com",
+                "*.altervista.org", "*.net", "*.io"
+        ));
+    }
+
+    @Test
+    public void shouldReturnTrueWhenNotInBlacklist() {
+        Assertions.assertTrue(filter.isAllowed("cloudflare.com"));
+    }
+
+    @Test
+    public void shouldReturnFalseWhenInBlacklist() {
+        Assertions.assertFalse(filter.isAllowed("google.com"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenIsNull() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> filter.isAllowed(null));
+    }
+
+}

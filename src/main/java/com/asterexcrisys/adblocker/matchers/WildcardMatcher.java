@@ -17,6 +17,9 @@ public final class WildcardMatcher implements Matcher {
 
     @Override
     public boolean matches(String domain) {
+        if (domain == null) {
+            throw new IllegalArgumentException("domain must not be null");
+        }
         return list.has(domain, "\\.");
     }
 

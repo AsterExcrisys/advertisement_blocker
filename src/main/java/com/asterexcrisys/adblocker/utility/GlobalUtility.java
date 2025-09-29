@@ -23,8 +23,8 @@ public final class GlobalUtility {
         SETTINGS = GlobalSettings.getInstance();
     }
 
-    public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) {
-        lock.lock();
+    public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {
+        lock.lockInterruptibly();
         try {
             return supplier.get();
         } finally {

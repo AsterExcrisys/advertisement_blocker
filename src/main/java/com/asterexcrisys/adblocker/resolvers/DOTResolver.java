@@ -38,6 +38,14 @@ public final class DOTResolver implements Resolver {
 
     @Override
     public Message resolve(Message request) {
+        if (!ResolverUtility.validateRequest(request)) {
+            return ResolverUtility.buildErrorResponse(
+                    request,
+                    Rcode.FORMERR,
+                    400,
+                    "Failed to resolve the DNS query: request must have a header and question field to be considered valid"
+            );
+        }
         try (Socket socket = socketFactory.createSocket(nameServer, serverPort)) {
             socket.setSoTimeout(5000);
             OutputStream output = socket.getOutputStream();
@@ -54,10 +62,13 @@ public final class DOTResolver implements Resolver {
             return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
-                    2,
+                    500,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }
     }
+
+    @Override
+    public void close() {}
 
 }

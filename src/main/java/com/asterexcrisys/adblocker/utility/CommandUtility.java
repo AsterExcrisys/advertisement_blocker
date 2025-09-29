@@ -26,13 +26,16 @@ public final class CommandUtility {
             List<String> filteredDomains = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
-                filteredDomains.add(line);
+                filteredDomains.add(parseFilteredDomain(line));
             }
             return filteredDomains;
         }
     }
 
     private static Resolver parseNameServer(String line) {
+        if (line.isBlank()) {
+            throw new IllegalArgumentException("line must not be empty or blank");
+        }
         if (line.length() < 3) {
             throw new IllegalArgumentException("line must contain the resolver type");
         }
@@ -82,6 +85,16 @@ public final class CommandUtility {
                 }
             }
         };
+    }
+
+    private static String parseFilteredDomain(String line) {
+        if (line.isBlank()) {
+            throw new IllegalArgumentException("line must not be empty or blank");
+        }
+        if (line.startsWith("www.")) {
+            return line.substring(4);
+        }
+        return line;
     }
 
 }

@@ -2,7 +2,6 @@ package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.*;
-import org.xbill.DNS.Record;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Objects;
@@ -16,11 +15,15 @@ public record STDResolver(String nameServer) implements Resolver {
 
     @Override
     public Message resolve(Message request) {
+        if (!ResolverUtility.validateRequest(request)) {
+            return ResolverUtility.buildErrorResponse(
+                    request,
+                    Rcode.FORMERR,
+                    400,
+                    "Failed to resolve the DNS query: request must have a header and question field to be considered valid"
+            );
+        }
         try {
-            Record question = request.getQuestion();
-            if (question == null) {
-                throw new IllegalArgumentException("No question found");
-            }
             SimpleResolver resolver = new SimpleResolver(nameServer);
             resolver.setTimeout(Duration.ofMillis(5000));
             OPTRecord record = request.getOPT();
@@ -39,10 +42,13 @@ public record STDResolver(String nameServer) implements Resolver {
             return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
-                    2,
+                    500,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }
     }
+
+    @Override
+    public void close() {}
 
 }

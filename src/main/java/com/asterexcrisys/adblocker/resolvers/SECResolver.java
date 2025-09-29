@@ -22,11 +22,15 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
 
     @Override
     public Message resolve(Message request) {
+        if (!ResolverUtility.validateRequest(request)) {
+            return ResolverUtility.buildErrorResponse(
+                    request,
+                    Rcode.FORMERR,
+                    400,
+                    "Failed to resolve the DNS query: request must have a header and question field to be considered valid"
+            );
+        }
         try {
-            Record question = request.getQuestion();
-            if (question == null) {
-                throw new IllegalArgumentException("No question found");
-            }
             ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
             resolver.setTimeout(Duration.ofMillis(5000));
             resolver.loadTrustAnchors(new ByteArrayInputStream(trustAnchor.getBytes(StandardCharsets.UTF_8)));
@@ -53,7 +57,7 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
             return ResolverUtility.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
-                    2,
+                    500,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
         }
@@ -85,5 +89,8 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
             response.addRecord(newRecord, Section.ADDITIONAL);
         }
     }
+
+    @Override
+    public void close() {}
 
 }

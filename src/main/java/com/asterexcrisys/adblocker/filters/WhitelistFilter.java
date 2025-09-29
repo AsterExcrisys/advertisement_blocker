@@ -27,7 +27,7 @@ public final class WhitelistFilter implements Filter {
     @Override
     public void load(String domain) {
         if (domain == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("domain must not be null");
         }
         switch (matcher) {
             case ExactMatcher exact -> exact.list().add(domain);
@@ -38,7 +38,7 @@ public final class WhitelistFilter implements Filter {
     @Override
     public void load(Collection<String> domains) {
         if (domains == null || domains.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("domains list must not be null or contain null elements");
         }
         switch (matcher) {
             case ExactMatcher exact -> exact.list().addAll(domains);
