@@ -76,13 +76,13 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 
 There are currently 5 resolver types supported by this proxy. Be aware that this only refers to **upstream** resolver types. The only types support for **downstream** requests are DNS over UDP and TCP.
 
-| **Full Name**             | **Short Name** | **Notes**          | **Format**                |
-|---------------------------|----------------|--------------------|---------------------------|
-| `Standard DNS (over UDP)` | *STD*          | N/A                | Type:Address              |
-| `Secure DNS (over UDP)`   | *SEC*          | N/A                | Type:Trust-Anchor:Address |
-| `DNS over TLS`            | *DOT*          | Needs to be tested | Type:Address:Port         |
-| `DNS over QUIC`           | *DOQ*          | Needs to be tested | Type:Address              |
-| `DNS over HTTPS`          | *DOH*          | Needs to be tested | Type:Method:Address       |
+| **Full Name**             | **Short Name** | **Notes**          | **Format**                  |
+|---------------------------|----------------|--------------------|-----------------------------|
+| `Standard DNS (over UDP)` | *STD*          | N/A                | Type:Address                |
+| `Secure DNS (over UDP)`   | *SEC*          | N/A                | Type:(Trust-Anchor):Address |
+| `DNS over TLS`            | *DOT*          | Needs to be tested | Type:Address:(Port)         |
+| `DNS over QUIC`           | *DOQ*          | Needs to be tested | Type:Address:(Port)         |
+| `DNS over HTTPS`          | *DOH*          | Needs to be tested | Type:(Method):Address       |
 
 ## 📄 Name Servers Format
 
