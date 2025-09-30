@@ -65,7 +65,6 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 | `-sr`, `--should-retry`    | *shouldRetry*     | Flag to indicate if the proxy should use a retry mechanism with failed requests.      | `false`     |
 | `-wl`, `--is-whitelist`    | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
 | `-wc`, `--is-wildcard`     | *isWildcard*      | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
-| `-sp`, `--server-port`     | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
 | `-cl`, `--cache-limit`     | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
 | `-rt`, `--request-timeout` | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
 | `-rl`, `--requests-limit`  | *requestsLimit*   | Maximum number of requests each handler task should process.                          | `100`       |
