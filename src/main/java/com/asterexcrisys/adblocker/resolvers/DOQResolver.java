@@ -39,7 +39,7 @@ public record DOQResolver(String nameServer, int serverPort) implements Resolver
         QuicClientConnection connection = null;
         try {
             connection = QuicClientConnection.newBuilder()
-                    .uri(URI.create("quic://%s:%s".formatted(nameServer, serverPort)))
+                    .uri(URI.create("%s://%s:%s".formatted(APPLICATION_PROTOCOL, nameServer, serverPort)))
                     .applicationProtocol(APPLICATION_PROTOCOL)
                     .connectTimeout(Duration.ofMillis(3000))
                     .maxIdleTimeout(Duration.ofMillis(5000))

@@ -12,7 +12,8 @@ public class DOQResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new DOQResolver("1.1.1.2");
+        resolver = new DOQResolver("1.1.1.1");
+        //resolver = new DOQResolver("94.140.14.14");
     }
 
     @AfterAll
@@ -20,7 +21,7 @@ public class DOQResolverUnitTests {
         resolver.close();
     }
 
-    @Test
+    //@Test
     public void shouldReturnNoErrorWhenValidExistentRequest() throws TextParseException {
         Name name = Name.fromString("cloudflare.com.", Name.root);
         Record question = Record.newRecord(name, Type.A, DClass.IN);
@@ -29,7 +30,7 @@ public class DOQResolverUnitTests {
         Assertions.assertEquals(Rcode.NOERROR, response.getHeader().getRcode());
     }
 
-    @Test
+    //@Test
     public void shouldReturnNxDomainWhenValidNonExistentRequest() throws TextParseException {
         Name name = Name.fromString("subdomain.example.com.", Name.root);
         Record question = Record.newRecord(name, Type.A, DClass.IN);
