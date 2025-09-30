@@ -5,7 +5,9 @@ import com.asterexcrisys.adblocker.types.HttpMethod;
 import com.asterexcrisys.adblocker.types.ResolverType;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
@@ -20,9 +22,14 @@ public final class CommandUtility {
     public static List<Resolver> parseNameServers(File file) throws Exception {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
             List<Resolver> nameServers = new ArrayList<>();
+            Set<String> lines = new HashSet<>();
             String line;
             while ((line = reader.readLine()) != null) {
+                if (lines.contains(line)) {
+                    continue;
+                }
                 nameServers.add(parseNameServer(line));
+                lines.add(line);
             }
             return nameServers;
         }
@@ -31,9 +38,14 @@ public final class CommandUtility {
     public static List<String> parseFilteredDomains(File file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
             List<String> filteredDomains = new ArrayList<>();
+            Set<String> lines = new HashSet<>();
             String line;
             while ((line = reader.readLine()) != null) {
+                if (lines.contains(line)) {
+                    continue;
+                }
                 filteredDomains.add(parseFilteredDomain(line));
+                lines.add(line);
             }
             return filteredDomains;
         }

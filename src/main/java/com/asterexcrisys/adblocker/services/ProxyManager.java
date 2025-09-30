@@ -79,7 +79,9 @@ public class ProxyManager implements AutoCloseable {
                     Duration.ofMillis(20000)
             ));
         }
-        state = ProxyState.ACTIVE;
+        if (!this.resolvers.isEmpty()) {
+            state = ProxyState.ACTIVE;
+        }
     }
 
     public void removeResolver(Resolver resolver) {
@@ -99,7 +101,7 @@ public class ProxyManager implements AutoCloseable {
         for (Resolver resolver : resolvers) {
             this.resolvers.remove(resolver);
         }
-        if (resolvers.isEmpty()) {
+        if (this.resolvers.isEmpty()) {
             state = ProxyState.INACTIVE;
         }
     }

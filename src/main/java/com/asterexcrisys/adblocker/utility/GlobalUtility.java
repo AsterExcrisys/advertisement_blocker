@@ -66,8 +66,8 @@ public final class GlobalUtility {
             String address = null;
             for (Record answer : response.getSection(Section.ANSWER)) {
                 if (answer.getTTL() > maximumTTL && answer.getName() != null) {
-                    maximumTTL = answer.getTTL();
                     address = answer.getName().toString(true);
+                    maximumTTL = answer.getTTL();
                 }
             }
             if (address == null) {
