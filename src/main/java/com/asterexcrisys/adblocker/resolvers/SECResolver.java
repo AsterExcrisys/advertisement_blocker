@@ -4,8 +4,7 @@ import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.FileInputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,11 +12,27 @@ import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public record SECResolver(String trustAnchor, String nameServer) implements Resolver {
+public final class SECResolver implements Resolver {
 
-    public SECResolver {
-        Objects.requireNonNull(trustAnchor);
-        Objects.requireNonNull(nameServer);
+    private final String trustAnchor;
+    private final String nameServer;
+
+    public SECResolver(String nameServer) {
+        trustAnchor = null;
+        this.nameServer = Objects.requireNonNull(nameServer);
+    }
+
+    public SECResolver(String trustAnchor, String nameServer) {
+        this.trustAnchor = Objects.requireNonNull(trustAnchor);
+        this.nameServer = Objects.requireNonNull(nameServer);
+    }
+
+    public String trustAnchor() {
+        return trustAnchor;
+    }
+
+    public String nameServer() {
+        return nameServer;
     }
 
     @Override
@@ -33,7 +48,9 @@ public record SECResolver(String trustAnchor, String nameServer) implements Reso
         try {
             ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
             resolver.setTimeout(Duration.ofMillis(5000));
-            resolver.loadTrustAnchors(new ByteArrayInputStream(trustAnchor.getBytes(StandardCharsets.UTF_8)));
+            if (trustAnchor != null) {
+                resolver.loadTrustAnchors(new FileInputStream(trustAnchor));
+            }
             OPTRecord record = request.getOPT();
             boolean isSecure;
             if (record != null) {

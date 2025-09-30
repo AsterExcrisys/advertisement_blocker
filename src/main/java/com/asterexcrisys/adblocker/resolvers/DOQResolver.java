@@ -13,12 +13,17 @@ import java.time.Duration;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public record DOQResolver(String nameServer) implements Resolver {
+public record DOQResolver(String nameServer, int serverPort) implements Resolver {
 
     private static final String APPLICATION_PROTOCOL = "doq";
 
-    public DOQResolver {
-        Objects.requireNonNull(nameServer);
+    public DOQResolver(String nameServer) {
+        this(nameServer, 853);
+    }
+
+    public DOQResolver(String nameServer, int serverPort) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        this.serverPort = serverPort;
     }
 
     @Override
@@ -34,7 +39,7 @@ public record DOQResolver(String nameServer) implements Resolver {
         QuicClientConnection connection = null;
         try {
             connection = QuicClientConnection.newBuilder()
-                    .uri(URI.create(nameServer))
+                    .uri(URI.create("quic://%s:%s".formatted(nameServer, serverPort)))
                     .applicationProtocol(APPLICATION_PROTOCOL)
                     .connectTimeout(Duration.ofMillis(3000))
                     .maxIdleTimeout(Duration.ofMillis(5000))

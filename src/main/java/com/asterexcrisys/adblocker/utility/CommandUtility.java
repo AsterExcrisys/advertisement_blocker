@@ -69,10 +69,14 @@ public final class CommandUtility {
             }
             case SEC -> {
                 String[] parts = line.split(":");
-                if (parts.length != 3) {
-                    throw new IllegalArgumentException("line must contain the trust anchor and resolver address (SEC)");
+                if (parts.length < 2 || parts.length > 3) {
+                    throw new IllegalArgumentException("line must contain the trust anchor (optional) and resolver address (SEC)");
                 }
-                yield new SECResolver(parts[1], resolveDomainIfNecessary(parts[2]));
+                if (parts.length == 2) {
+                    yield new SECResolver(resolveDomainIfNecessary(parts[1]));
+                } else {
+                    yield new SECResolver(parts[1], resolveDomainIfNecessary(parts[2]));
+                }
             }
             case DOT -> {
                 String[] parts = line.split(":");
@@ -87,10 +91,14 @@ public final class CommandUtility {
             }
             case DOQ -> {
                 String[] parts = line.split(":");
-                if (parts.length != 2) {
-                    throw new IllegalArgumentException("line must contain the resolver address (DOQ)");
+                if (parts.length < 2 || parts.length > 3) {
+                    throw new IllegalArgumentException("line must contain the resolver address and port (optional) (DOQ)");
                 }
-                yield new DOQResolver(resolveDomainIfNecessary(parts[1]));
+                if (parts.length == 2) {
+                    yield new DOQResolver(resolveDomainIfNecessary(parts[1]));
+                } else {
+                    yield new DOQResolver(resolveDomainIfNecessary(parts[1]), Integer.parseInt(parts[2]));
+                }
             }
             case DOH -> {
                 String[] parts = line.split(":");

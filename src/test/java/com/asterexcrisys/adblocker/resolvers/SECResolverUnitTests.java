@@ -12,7 +12,7 @@ public class SECResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new SECResolver("trust-anchor", "1.1.1.1");
+        resolver = new SECResolver("1.1.1.1");
     }
 
     @AfterAll
@@ -23,7 +23,7 @@ public class SECResolverUnitTests {
     @Test
     public void shouldReturnNoErrorWhenValidExistentRequest() throws TextParseException {
         Name name = Name.fromString("cloudflare.com.", Name.root);
-        org.xbill.DNS.Record question = org.xbill.DNS.Record.newRecord(name, Type.A, DClass.IN);
+        Record question = Record.newRecord(name, Type.A, DClass.IN);
         Message request = Message.newQuery(question);
         Message response = resolver.resolve(request);
         Assertions.assertEquals(Rcode.NOERROR, response.getHeader().getRcode());
@@ -31,8 +31,8 @@ public class SECResolverUnitTests {
 
     @Test
     public void shouldReturnNxDomainWhenValidNonExistentRequest() throws TextParseException {
-        Name name = Name.fromString("not.cloudflare.com.", Name.root);
-        org.xbill.DNS.Record question = Record.newRecord(name, Type.A, DClass.IN);
+        Name name = Name.fromString("subdomain.example.com.", Name.root);
+        Record question = Record.newRecord(name, Type.A, DClass.IN);
         Message request = Message.newQuery(question);
         Message response = resolver.resolve(request);
         Assertions.assertEquals(Rcode.NXDOMAIN, response.getHeader().getRcode());

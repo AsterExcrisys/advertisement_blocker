@@ -59,7 +59,9 @@ public class DomainTrie {
     }
 
     private String[] ignoreBlankParts(String word, String separator) {
-        return Stream.of(word.split(separator)).filter(String::isBlank).toArray(String[]::new);
+        return Stream.of(word.split(separator))
+                .filter((parts) -> !parts.isBlank())
+                .toArray(String[]::new);
     }
 
     private boolean has(DomainTrieNode current, String[] parts, int index) {

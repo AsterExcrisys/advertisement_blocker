@@ -25,12 +25,12 @@ public class ExactMatchWhitelistFilterUnitTests {
 
     @Test
     public void shouldReturnFalseWhenNotInWhitelist() {
-        Assertions.assertTrue(filter.isAllowed("cloudflare.com"));
+        Assertions.assertFalse(filter.isAllowed("cloudflare.com"));
     }
 
     @Test
     public void shouldReturnTrueWhenInWhitelist() {
-        Assertions.assertFalse(filter.isAllowed("google.com"));
+        Assertions.assertTrue(filter.isAllowed("google.com"));
     }
 
     @Test
