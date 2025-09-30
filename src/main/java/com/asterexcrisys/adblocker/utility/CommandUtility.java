@@ -6,11 +6,18 @@ import com.asterexcrisys.adblocker.types.ResolverType;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public final class CommandUtility {
 
-    public static List<Resolver> parseNameServers(File file) throws IOException {
+    private static final Pattern DOMAIN_PATTERN;
+
+    static {
+        DOMAIN_PATTERN = Pattern.compile("^(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}$");
+    }
+
+    public static List<Resolver> parseNameServers(File file) throws Exception {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
             List<Resolver> nameServers = new ArrayList<>();
             String line;
@@ -32,28 +39,28 @@ public final class CommandUtility {
         }
     }
 
-    private static Resolver parseNameServer(String line) {
+    private static Resolver parseNameServer(String line) throws Exception {
         if (line.isBlank()) {
             throw new IllegalArgumentException("line must not be empty or blank");
         }
-        if (line.length() < 3) {
+        if (line.trim().length() < 3) {
             throw new IllegalArgumentException("line must contain the resolver type");
         }
-        ResolverType type = ResolverType.valueOf(line.substring(0, 3).toUpperCase());
+        ResolverType type = ResolverType.valueOf(line.trim().substring(0, 3).toUpperCase());
         return switch (type) {
             case STD -> {
                 String[] parts = line.split(":");
                 if (parts.length != 2) {
                     throw new IllegalArgumentException("line must contain the resolver address (STD)");
                 }
-                yield new STDResolver(parts[1]);
+                yield new STDResolver(resolveDomainIfNecessary(parts[1]));
             }
             case SEC -> {
                 String[] parts = line.split(":");
                 if (parts.length != 3) {
                     throw new IllegalArgumentException("line must contain the trust anchor and resolver address (SEC)");
                 }
-                yield new SECResolver(parts[1], parts[2]);
+                yield new SECResolver(parts[1], resolveDomainIfNecessary(parts[2]));
             }
             case DOT -> {
                 String[] parts = line.split(":");
@@ -61,9 +68,9 @@ public final class CommandUtility {
                     throw new IllegalArgumentException("line must contain the resolver address and port (optional) (DOT)");
                 }
                 if (parts.length == 2) {
-                    yield new DOTResolver(parts[1]);
+                    yield new DOTResolver(resolveDomainIfNecessary(parts[1]));
                 } else {
-                    yield new DOTResolver(parts[1], Integer.parseInt(parts[2]));
+                    yield new DOTResolver(resolveDomainIfNecessary(parts[1]), Integer.parseInt(parts[2]));
                 }
             }
             case DOQ -> {
@@ -71,7 +78,7 @@ public final class CommandUtility {
                 if (parts.length != 2) {
                     throw new IllegalArgumentException("line must contain the resolver address (DOQ)");
                 }
-                yield new DOQResolver(parts[1]);
+                yield new DOQResolver(resolveDomainIfNecessary(parts[1]));
             }
             case DOH -> {
                 String[] parts = line.split(":");
@@ -79,9 +86,9 @@ public final class CommandUtility {
                     throw new IllegalArgumentException("line must contain the resolver method (optional) and address (DOT)");
                 }
                 if (parts.length == 2) {
-                    yield new DOHResolver(parts[1]);
+                    yield new DOHResolver(resolveDomainIfNecessary(parts[1]));
                 } else {
-                    yield new DOHResolver(HttpMethod.valueOf(parts[1].toUpperCase()), parts[2]);
+                    yield new DOHResolver(HttpMethod.valueOf(parts[1].toUpperCase()), resolveDomainIfNecessary(parts[2]));
                 }
             }
         };
@@ -92,9 +99,16 @@ public final class CommandUtility {
             throw new IllegalArgumentException("line must not be empty or blank");
         }
         if (line.startsWith("www.")) {
-            return line.substring(4);
+            return line.trim().substring(4);
         }
-        return line;
+        return line.trim();
+    }
+
+    private static String resolveDomainIfNecessary(String address) throws Exception {
+        if (!DOMAIN_PATTERN.matcher(address).matches()) {
+            return address;
+        }
+        return GlobalUtility.resolveDomainAddress(address, true);
     }
 
 }

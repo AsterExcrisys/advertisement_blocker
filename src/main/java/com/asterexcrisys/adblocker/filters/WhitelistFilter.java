@@ -26,61 +26,41 @@ public final class WhitelistFilter implements Filter {
 
     @Override
     public void load(String domain) {
-        if (domain == null) {
-            throw new IllegalArgumentException("domain must not be null");
-        }
         switch (matcher) {
-            case ExactMatcher exact -> exact.list().add(domain);
-            case WildcardMatcher wildcard -> wildcard.list().add(domain, "\\.");
+            case ExactMatcher exact -> exact.add(domain);
+            case WildcardMatcher wildcard -> wildcard.add(domain);
         }
     }
 
     @Override
     public void load(Collection<String> domains) {
-        if (domains == null || domains.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("domains list must not be null or contain null elements");
-        }
         switch (matcher) {
-            case ExactMatcher exact -> exact.list().addAll(domains);
-            case WildcardMatcher wildcard -> {
-                for (String domain : domains) {
-                    wildcard.list().add(domain, "\\.");
-                }
-            }
+            case ExactMatcher exact -> exact.addAll(domains);
+            case WildcardMatcher wildcard -> wildcard.addAll(domains);
         }
     }
 
     @Override
     public void unload(String domain) {
-        if (domain == null) {
-            return;
-        }
         switch (matcher) {
-            case ExactMatcher exact -> exact.list().remove(domain);
-            case WildcardMatcher wildcard -> wildcard.list().remove(domain, "\\.");
+            case ExactMatcher exact -> exact.remove(domain);
+            case WildcardMatcher wildcard -> wildcard.remove(domain);
         }
     }
 
     @Override
     public void unload(Collection<String> domains) {
-        if (domains == null || domains.stream().allMatch(Objects::isNull)) {
-            return;
-        }
         switch (matcher) {
-            case ExactMatcher exact -> exact.list().removeAll(domains);
-            case WildcardMatcher wildcard -> {
-                for (String domain : domains) {
-                    wildcard.list().remove(domain, "\\.");
-                }
-            }
+            case ExactMatcher exact -> exact.removeAll(domains);
+            case WildcardMatcher wildcard -> wildcard.removeAll(domains);
         }
     }
 
     @Override
     public void clear() {
         switch (matcher) {
-            case ExactMatcher exact -> exact.list().clear();
-            case WildcardMatcher wildcard -> wildcard.list().clear();
+            case ExactMatcher exact -> exact.clear();
+            case WildcardMatcher wildcard -> wildcard.clear();
         }
     }
 

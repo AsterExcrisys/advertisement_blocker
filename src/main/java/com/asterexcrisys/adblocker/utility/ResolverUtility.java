@@ -18,6 +18,19 @@ public final class ResolverUtility {
         return request.getQuestion() != null;
     }
 
+    public static boolean validateResponse(Message response) {
+        if (response == null) {
+            return false;
+        }
+        if (response.getHeader() == null) {
+            return false;
+        }
+        if (response.getQuestion() == null) {
+            return false;
+        }
+        return response.getSection(Section.ANSWER) != null;
+    }
+
     public static void updatePayloadSize(Message request) {
         OPTRecord oldRecord = request.getOPT();
         OPTRecord newRecord;

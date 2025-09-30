@@ -1,3 +1,10 @@
 ads.service.com
 tracker.domain.net
 doubleclick.net
+ad.doubleclick.net
+googlesyndication.com
+googleadservices.com
+adservice.google.com
+ads.google.com
+connect.facebook.net
+bat.bing.com

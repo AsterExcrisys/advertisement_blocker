@@ -19,7 +19,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import java.io.File;
-import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -120,7 +119,7 @@ public class ProxyCommand implements Callable<Integer> {
                 ExecutorService executor = initializeExecutor();
                 ScheduledExecutorService scheduler = initializeScheduler();
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
-                ServerSocket tcpSocket = new ServerSocket(serverPort);
+                ServerSocket tcpSocket = new ServerSocket(serverPort)
         ) {
             BlockingQueue<UDPPacket> udpRequests = new LinkedBlockingQueue<>();
             BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
@@ -200,7 +199,7 @@ public class ProxyCommand implements Callable<Integer> {
         });
     }
 
-    public ThreadContext initializeContext() throws IOException {
+    public ThreadContext initializeContext() throws Exception {
         ReentrantLock lock = new ReentrantLock();
         ProxyManager manager = new ProxyManager(shouldRetry);
         manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
