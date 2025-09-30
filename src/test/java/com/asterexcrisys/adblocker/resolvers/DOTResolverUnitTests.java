@@ -12,7 +12,7 @@ public class DOTResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new DOTResolver("1.1.1.1");
+        resolver = new DOTResolver("1.1.1.2");
     }
 
     @AfterAll

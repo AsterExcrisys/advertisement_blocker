@@ -91,8 +91,13 @@ Plaintext file, one domain/address (preceded by the resolver type) per line:
 ```
 STD:1.1.1.1
 STD:1.0.0.1
+STD:1.1.1.2
+STD:1.0.0.2
+STD:1.1.1.3
+STD:1.0.0.3
 STD:8.8.8.8
 STD:8.0.0.8
+STD:9.9.9.9
 ```
 
 ## 📄 Filtered Domains Format
@@ -103,6 +108,13 @@ Plaintext file, one domain per line:
 ads.service.com
 tracker.domain.net
 doubleclick.net
+ad.doubleclick.net
+googlesyndication.com
+googleadservices.com
+adservice.google.com
+ads.google.com
+connect.facebook.net
+bat.bing.com
 ```
 
 ## 🧪 Testing

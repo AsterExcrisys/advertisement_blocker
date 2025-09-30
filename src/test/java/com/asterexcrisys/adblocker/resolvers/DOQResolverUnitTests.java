@@ -12,7 +12,7 @@ public class DOQResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new DOQResolver("1.1.1.1");
+        resolver = new DOQResolver("1.1.1.2");
     }
 
     @AfterAll

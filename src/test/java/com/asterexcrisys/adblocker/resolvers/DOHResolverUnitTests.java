@@ -12,7 +12,7 @@ public class DOHResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new DOHResolver("1.1.1.1");
+        resolver = new DOHResolver("1.1.1.2");
     }
 
     @AfterAll

@@ -4,7 +4,7 @@ import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import tech.kwik.core.QuicClientConnection;
-import tech.kwik.core.QuicConnection;
+import tech.kwik.core.QuicConnection.QuicVersion;
 import tech.kwik.core.QuicStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,7 +43,9 @@ public record DOQResolver(String nameServer, int serverPort) implements Resolver
                     .applicationProtocol(APPLICATION_PROTOCOL)
                     .connectTimeout(Duration.ofMillis(3000))
                     .maxIdleTimeout(Duration.ofMillis(5000))
-                    .version(QuicConnection.QuicVersion.V2)
+                    .enableDatagramExtension()
+                    .preferredVersion(QuicVersion.V2)
+                    .preferIPv4()
                     .build();
             connection.connect();
             QuicStream stream = connection.createStream(true);

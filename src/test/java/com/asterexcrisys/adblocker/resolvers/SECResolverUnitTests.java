@@ -12,7 +12,7 @@ public class SECResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new SECResolver("1.1.1.1");
+        resolver = new SECResolver("1.1.1.2");
     }
 
     @AfterAll

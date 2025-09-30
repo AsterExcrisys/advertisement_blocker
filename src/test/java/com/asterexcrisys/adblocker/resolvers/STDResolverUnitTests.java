@@ -12,7 +12,7 @@ public class STDResolverUnitTests {
 
     @BeforeAll
     public void setUp() {
-        resolver = new STDResolver("1.1.1.1");
+        resolver = new STDResolver("1.1.1.2");
     }
 
     @AfterAll

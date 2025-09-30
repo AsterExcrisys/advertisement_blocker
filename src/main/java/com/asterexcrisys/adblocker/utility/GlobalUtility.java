@@ -57,7 +57,7 @@ public final class GlobalUtility {
         Name name = Name.fromString(domain, Name.root);
         Record question = Record.newRecord(name, preferIPv4? Type.A:Type.AAAA, DClass.IN);
         Message request = Message.newQuery(question);
-        try (Resolver resolver = new STDResolver("1.1.1.1")) {
+        try (Resolver resolver = new STDResolver("1.1.1.2")) {
             Message response = resolver.resolve(request);
             if (!ResolverUtility.validateResponse(response)) {
                 throw new IllegalArgumentException("response must have a header, question, and answer(s) field to be considered valid");
