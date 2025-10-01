@@ -22,13 +22,23 @@ jobs:
         java-version: '21'
         distribution: 'corretto'
 
+    - name: Run tests with JUnit
+      run: mvn test
+
     - name: Build with Apache Maven
       run: mvn -B package --file pom.xml
 
     - name: Publish to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        files: |
-          target/*.jar
+        files: target/*.jar
+        name: Release ${{ github.ref_name }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Cache repository
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-
