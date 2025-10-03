@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.types;
+package com.asterexcrisys.adblocker.models.records;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import java.util.Objects;

@@ -11,6 +11,11 @@ public class DomainTrie {
     private final DomainTrieNode root;
     private final String wildcard;
 
+    public DomainTrie() {
+        root = DomainTrieNode.of("www", new HashMap<>());
+        this.wildcard = "*";
+    }
+
     public DomainTrie(String prefix, String wildcard) {
         root = DomainTrieNode.of(Objects.requireNonNull(prefix), new HashMap<>());
         this.wildcard = Objects.requireNonNull(wildcard);

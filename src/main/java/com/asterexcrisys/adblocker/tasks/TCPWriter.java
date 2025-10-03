@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.types.TCPPacket;
+import com.asterexcrisys.adblocker.models.records.TCPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.OutputStream;
@@ -24,13 +24,16 @@ public class TCPWriter extends Thread {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 TCPPacket responsePacket = responses.take();
-                try (Socket clientSocket = responsePacket.socket()) {
-                    OutputStream output = clientSocket.getOutputStream();
-                    byte[] data = responsePacket.data();
-                    output.write((data.length >> 8) & 0xFF);
-                    output.write(data.length & 0xFF);
-                    output.write(data);
+                Socket clientSocket = responsePacket.socket();
+                if (clientSocket.isClosed() || clientSocket.isOutputShutdown()) {
+                    continue;
                 }
+                OutputStream output = clientSocket.getOutputStream();
+                byte[] data = responsePacket.data();
+                output.write((data.length >> 8) & 0xFF);
+                output.write(data.length & 0xFF);
+                output.write(data);
+                output.flush();
             }
         } catch (Exception exception) {
             LOGGER.error("Failed to send TCP response: {}", exception.getMessage());

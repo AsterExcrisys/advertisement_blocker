@@ -1,5 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
+import com.asterexcrisys.adblocker.models.types.DNSProtocol;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
@@ -16,15 +17,30 @@ public final class SECResolver implements Resolver {
 
     private final String trustAnchor;
     private final String nameServer;
+    private final DNSProtocol dnsProtocol;
 
     public SECResolver(String nameServer) {
-        trustAnchor = null;
         this.nameServer = Objects.requireNonNull(nameServer);
+        trustAnchor = null;
+        dnsProtocol = DNSProtocol.UDP;
     }
 
-    public SECResolver(String trustAnchor, String nameServer) {
-        this.trustAnchor = Objects.requireNonNull(trustAnchor);
+    public SECResolver(String nameServer, String trustAnchor) {
         this.nameServer = Objects.requireNonNull(nameServer);
+        this.trustAnchor = Objects.requireNonNull(trustAnchor);
+        dnsProtocol = DNSProtocol.UDP;
+    }
+
+    public SECResolver(String nameServer, DNSProtocol dnsProtocol) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        trustAnchor = null;
+        this.dnsProtocol = Objects.requireNonNull(dnsProtocol);
+    }
+
+    public SECResolver(String nameServer, String trustAnchor, DNSProtocol dnsProtocol) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        this.trustAnchor = Objects.requireNonNull(trustAnchor);
+        this.dnsProtocol = Objects.requireNonNull(dnsProtocol);
     }
 
     public String trustAnchor() {
@@ -47,6 +63,8 @@ public final class SECResolver implements Resolver {
         }
         try {
             ValidatingResolver resolver = new ValidatingResolver(new SimpleResolver(nameServer));
+            resolver.setTCP(dnsProtocol != DNSProtocol.UDP);
+            resolver.setIgnoreTruncation(true);
             resolver.setTimeout(Duration.ofMillis(5000));
             if (trustAnchor != null) {
                 resolver.loadTrustAnchors(new FileInputStream(trustAnchor));

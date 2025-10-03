@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.types.TCPPacket;
+import com.asterexcrisys.adblocker.models.records.TCPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @SuppressWarnings("unused")
 public class TCPReader extends Thread {
@@ -27,10 +29,10 @@ public class TCPReader extends Thread {
 
     @Override
     public void run() {
-        try {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             while (!Thread.currentThread().isInterrupted() && !serverSocket.isClosed()) {
                 final Socket clientSocket = serverSocket.accept();
-                Thread.startVirtualThread(() -> handleRequest(clientSocket));
+                executor.submit(() -> handleRequest(clientSocket));
             }
         } catch (Exception exception) {
             LOGGER.error("Failed to accept TCP connection: {}", exception.getMessage());
@@ -39,33 +41,34 @@ public class TCPReader extends Thread {
     }
 
     private void handleRequest(Socket clientSocket) {
-        byte[] buffer = new byte[4096];
-        try {
-            int length = handlePacket(
-                    clientSocket.getInputStream(),
-                    clientSocket.getOutputStream(),
-                    buffer
-            );
-            if (length == -1) {
-                clientSocket.close();
-                return;
-            }
-            TCPPacket requestPacket = TCPPacket.of(
-                    clientSocket,
-                    Arrays.copyOf(buffer, length)
-            );
-            if (requests.offer(requestPacket)) {
-                LOGGER.info(
-                        "Succeeded to receive TCP request from {}:{}",
-                        clientSocket.getLocalAddress().getHostAddress(),
-                        clientSocket.getLocalPort()
+        try (clientSocket) {
+            byte[] buffer = new byte[4096];
+            while (!Thread.currentThread().isInterrupted() && !clientSocket.isClosed() && !clientSocket.isInputShutdown()) {
+                int length = handlePacket(
+                        clientSocket.getInputStream(),
+                        clientSocket.getOutputStream(),
+                        buffer
                 );
-            } else {
-                LOGGER.warn(
-                        "Failed to receive TCP request from {}:{}",
-                        clientSocket.getLocalAddress().getHostAddress(),
-                        clientSocket.getLocalPort()
+                if (length == -1) {
+                    break;
+                }
+                TCPPacket requestPacket = TCPPacket.of(
+                        clientSocket,
+                        Arrays.copyOf(buffer, length)
                 );
+                if (requests.offer(requestPacket)) {
+                    LOGGER.info(
+                            "Succeeded to receive TCP request from {}:{}",
+                            clientSocket.getLocalAddress().getHostAddress(),
+                            clientSocket.getLocalPort()
+                    );
+                } else {
+                    LOGGER.warn(
+                            "Failed to receive TCP request from {}:{}",
+                            clientSocket.getLocalAddress().getHostAddress(),
+                            clientSocket.getLocalPort()
+                    );
+                }
             }
         } catch (Exception exception) {
             LOGGER.error("Failed to read TCP request: {}", exception.getMessage());

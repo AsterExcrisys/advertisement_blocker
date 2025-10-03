@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.types.HttpMethod;
+import com.asterexcrisys.adblocker.models.types.HTTPMethod;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
@@ -15,15 +15,15 @@ public final class DOHResolver implements Resolver {
 
     private static final MediaType MEDIA_TYPE = MediaType.get("application/dns-message");
 
-    private final HttpMethod httpMethod;
     private final String nameServer;
     private final String queryEndpoint;
+    private final HTTPMethod httpMethod;
     private final OkHttpClient client;
 
     public DOHResolver(String nameServer) {
-        this.httpMethod = HttpMethod.POST;
         this.nameServer = Objects.requireNonNull(nameServer);
         queryEndpoint = "dns-query";
+        httpMethod = HTTPMethod.POST;
         client = new OkHttpClient.Builder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .callTimeout(Duration.ofSeconds(5))
@@ -32,22 +32,10 @@ public final class DOHResolver implements Resolver {
                 .build();
     }
 
-    public DOHResolver(HttpMethod httpMethod, String nameServer) {
-        this.httpMethod = Objects.requireNonNull(httpMethod);
-        this.nameServer = Objects.requireNonNull(nameServer);
-        queryEndpoint = "dns-query";
-        client = new OkHttpClient.Builder()
-                .connectTimeout(Duration.ofSeconds(3))
-                .callTimeout(Duration.ofSeconds(5))
-                .readTimeout(Duration.ofSeconds(5))
-                .retryOnConnectionFailure(true)
-                .build();
-    }
-
-    public DOHResolver(HttpMethod httpMethod, String nameServer, String queryEndpoint) {
-        this.httpMethod = Objects.requireNonNull(httpMethod);
+    public DOHResolver(String nameServer, String queryEndpoint) {
         this.nameServer = Objects.requireNonNull(nameServer);
         this.queryEndpoint = Objects.requireNonNull(queryEndpoint);
+        httpMethod = HTTPMethod.POST;
         client = new OkHttpClient.Builder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .callTimeout(Duration.ofSeconds(5))
@@ -56,8 +44,28 @@ public final class DOHResolver implements Resolver {
                 .build();
     }
 
-    public HttpMethod httpMethod() {
-        return httpMethod;
+    public DOHResolver(String nameServer, HTTPMethod httpMethod) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        queryEndpoint = "dns-query";
+        this.httpMethod = Objects.requireNonNull(httpMethod);
+        client = new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(3))
+                .callTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(5))
+                .retryOnConnectionFailure(true)
+                .build();
+    }
+
+    public DOHResolver(String nameServer, String queryEndpoint, HTTPMethod httpMethod) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        this.queryEndpoint = Objects.requireNonNull(queryEndpoint);
+        this.httpMethod = Objects.requireNonNull(httpMethod);
+        client = new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(3))
+                .callTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(5))
+                .retryOnConnectionFailure(true)
+                .build();
     }
 
     public String nameServer() {
@@ -66,6 +74,10 @@ public final class DOHResolver implements Resolver {
 
     public String queryEndpoint() {
         return queryEndpoint;
+    }
+
+    public HTTPMethod httpMethod() {
+        return httpMethod;
     }
 
     @Override
@@ -81,14 +93,14 @@ public final class DOHResolver implements Resolver {
         try {
             ResolverUtility.updatePayloadSize(request);
             Request httpRequest;
-            if (httpMethod == HttpMethod.GET) {
+            if (httpMethod == HTTPMethod.GET) {
                 httpRequest = buildGetRequest(request);
             } else {
                 httpRequest = buildPostRequest(request);
             }
             try (Response httpResponse = client.newCall(httpRequest).execute()) {
-                if (!httpResponse.isSuccessful() || httpResponse.body() == null) {
-                    throw new IOException("Unexpected response from '%s'".formatted(nameServer));
+                if (!httpResponse.isSuccessful()) {
+                    throw new IllegalArgumentException("invalid response received from '%s'".formatted(nameServer));
                 }
                 return new Message(httpResponse.body().bytes());
             }
@@ -104,8 +116,8 @@ public final class DOHResolver implements Resolver {
 
     @Override
     public void close() throws IOException {
-        client.connectionPool().evictAll();
         client.dispatcher().executorService().shutdown();
+        client.connectionPool().evictAll();
         if (client.cache() != null) {
             client.cache().close();
         }
@@ -116,8 +128,7 @@ public final class DOHResolver implements Resolver {
         return new Request.Builder()
                 .url("https://%s/%s?dns=%s".formatted(nameServer, queryEndpoint, dnsRequest))
                 .addHeader("Content-Type", MEDIA_TYPE.type())
-                .get()
-                .build();
+                .get().build();
     }
 
     private Request buildPostRequest(Message request) {
@@ -126,8 +137,7 @@ public final class DOHResolver implements Resolver {
                 .url("https://%s/%s".formatted(nameServer, queryEndpoint))
                 .addHeader("Content-Type", MEDIA_TYPE.type())
                 .addHeader("Accept", MEDIA_TYPE.type())
-                .post(dnsRequest)
-                .build();
+                .post(dnsRequest).build();
     }
 
 }

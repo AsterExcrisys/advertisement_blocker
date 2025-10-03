@@ -1,8 +1,8 @@
 package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
-import com.asterexcrisys.adblocker.types.ThreadContext;
-import com.asterexcrisys.adblocker.types.UDPPacket;
+import com.asterexcrisys.adblocker.models.records.ThreadContext;
+import com.asterexcrisys.adblocker.models.records.UDPPacket;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

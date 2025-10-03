@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.types;
+package com.asterexcrisys.adblocker.models.types;
 
 public enum DispatchType {
     NONE,

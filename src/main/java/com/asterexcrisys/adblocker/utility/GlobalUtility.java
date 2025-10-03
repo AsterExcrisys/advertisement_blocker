@@ -6,14 +6,17 @@ import com.asterexcrisys.adblocker.resolvers.STDResolver;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import org.bouncycastle.tls.TlsCloseable;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
@@ -31,6 +34,26 @@ public final class GlobalUtility {
             list.add(supplier.get());
         }
         return list;
+    }
+
+    public static <T extends TlsCloseable, R> R tryWith(T resource, Function<T, R> function) throws IOException {
+        Throwable primary = null;
+        try {
+            return function.apply(resource);
+        } catch (Throwable throwable) {
+            primary = throwable;
+            throw throwable;
+        } finally {
+            try {
+                resource.close();
+            } catch (Throwable secondary) {
+                if (primary != null) {
+                    primary.addSuppressed(secondary);
+                } else {
+                    throw secondary;
+                }
+            }
+        }
     }
 
     public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {

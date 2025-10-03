@@ -4,7 +4,7 @@ import com.asterexcrisys.adblocker.filters.BlacklistFilter;
 import com.asterexcrisys.adblocker.filters.Filter;
 import com.asterexcrisys.adblocker.matchers.Matcher;
 import com.asterexcrisys.adblocker.resolvers.Resolver;
-import com.asterexcrisys.adblocker.types.ProxyState;
+import com.asterexcrisys.adblocker.models.types.ProxyState;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
@@ -180,7 +180,7 @@ public class ProxyManager implements AutoCloseable {
                     request,
                     Rcode.SERVFAIL,
                     500,
-                    "No available resolvers were found"
+                    "Failed to resolve the DNS query: no available resolvers were found"
             );
         }
         Name name = request.getQuestion().getName();
@@ -224,7 +224,7 @@ public class ProxyManager implements AutoCloseable {
                 request,
                 Rcode.SERVFAIL,
                 500,
-                "No available resolvers were found"
+                "Failed to resolve the DNS query: no available resolvers were found"
         );
         for (Map.Entry<Resolver, CircuitBreaker> entry : resolvers.entrySet()) {
             if (entry.getValue().getState() != State.CLOSED && entry.getValue().getState() != State.HALF_OPEN) {

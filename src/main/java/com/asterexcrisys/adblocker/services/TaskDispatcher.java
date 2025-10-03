@@ -2,10 +2,10 @@ package com.asterexcrisys.adblocker.services;
 
 import com.asterexcrisys.adblocker.tasks.TCPHandler;
 import com.asterexcrisys.adblocker.tasks.UDPHandler;
-import com.asterexcrisys.adblocker.types.DispatchType;
-import com.asterexcrisys.adblocker.types.TCPPacket;
-import com.asterexcrisys.adblocker.types.ThreadContext;
-import com.asterexcrisys.adblocker.types.UDPPacket;
+import com.asterexcrisys.adblocker.models.types.DispatchType;
+import com.asterexcrisys.adblocker.models.records.TCPPacket;
+import com.asterexcrisys.adblocker.models.records.ThreadContext;
+import com.asterexcrisys.adblocker.models.records.UDPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;

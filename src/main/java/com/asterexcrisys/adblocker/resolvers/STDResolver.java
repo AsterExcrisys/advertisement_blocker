@@ -1,5 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
+import com.asterexcrisys.adblocker.models.types.DNSProtocol;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
 import org.xbill.DNS.*;
 import java.time.Duration;
@@ -7,10 +8,15 @@ import java.util.Collections;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public record STDResolver(String nameServer) implements Resolver {
+public record STDResolver(String nameServer, DNSProtocol dnsProtocol) implements Resolver {
 
-    public STDResolver {
-        Objects.requireNonNull(nameServer);
+    public STDResolver(String nameServer) {
+        this(nameServer, DNSProtocol.UDP);
+    }
+
+    public STDResolver(String nameServer, DNSProtocol dnsProtocol) {
+        this.nameServer = Objects.requireNonNull(nameServer);
+        this.dnsProtocol = Objects.requireNonNull(dnsProtocol);
     }
 
     @Override
@@ -25,6 +31,8 @@ public record STDResolver(String nameServer) implements Resolver {
         }
         try {
             SimpleResolver resolver = new SimpleResolver(nameServer);
+            resolver.setTCP(dnsProtocol != DNSProtocol.UDP);
+            resolver.setIgnoreTruncation(true);
             resolver.setTimeout(Duration.ofMillis(5000));
             OPTRecord record = request.getOPT();
             if (record != null) {
