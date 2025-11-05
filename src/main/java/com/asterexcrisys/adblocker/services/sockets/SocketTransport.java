@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class SocketTransport implements DatagramTransport {
 
     private final DatagramSocket serverSocket;

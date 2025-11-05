@@ -2,6 +2,7 @@ package com.asterexcrisys.adblocker.services.sockets;
 
 import org.bouncycastle.tls.*;
 
+@SuppressWarnings("unused")
 public class SocketAuthentication implements TlsAuthentication {
 
 

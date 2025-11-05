@@ -85,7 +85,17 @@ public final class CommandUtility {
                     yield new SECResolver(resolveDomainIfNecessary(parts[1]), parts[2], DNSProtocol.valueOf(parts[3].toUpperCase()));
                 }
             }
-            case DOD -> throw new UnsupportedOperationException("DOD is not yet supported");
+            case DOD -> {
+                String[] parts = line.split(":");
+                if (parts.length < 2 || parts.length > 3) {
+                    throw new IllegalArgumentException("line must contain the resolver address and port (optional) (DOD)");
+                }
+                if (parts.length == 2) {
+                    yield new DODResolver(resolveDomainIfNecessary(parts[1]));
+                } else {
+                    yield new DODResolver(resolveDomainIfNecessary(parts[1]), Integer.parseInt(parts[2]));
+                }
+            }
             case DOT -> {
                 String[] parts = line.split(":");
                 if (parts.length < 2 || parts.length > 3) {
