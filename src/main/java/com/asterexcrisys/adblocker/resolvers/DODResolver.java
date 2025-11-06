@@ -1,37 +1,42 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.services.sockets.SocketTransport;
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.services.SessionHandler;
 import com.asterexcrisys.adblocker.utility.ResolverUtility;
-import org.bouncycastle.tls.*;
+import org.snf4j.core.DTLSSession;
+import org.snf4j.core.SelectorLoop;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
+import java.nio.channels.DatagramChannel;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 public final class DODResolver implements Resolver {
 
     private final String nameServer;
     private final int serverPort;
-    private final DTLSClientProtocol protocol;
-    private final DatagramTransport transport;
+    private final SelectorLoop loop;
 
-    public DODResolver(String nameServer) throws SocketException, UnknownHostException {
+    public DODResolver(String nameServer) throws IOException {
         this.nameServer = Objects.requireNonNull(nameServer);
         this.serverPort = 853;
-        protocol = new DTLSClientProtocol();
-        transport = new SocketTransport(InetAddress.getByName(this.nameServer), this.serverPort, 1500);
+        loop = new SelectorLoop();
     }
 
-    public DODResolver(String nameServer, int serverPort) throws SocketException, UnknownHostException {
+    public DODResolver(String nameServer, int serverPort) throws IOException {
         this.nameServer = Objects.requireNonNull(nameServer);
         this.serverPort = serverPort;
-        protocol = new DTLSClientProtocol();
-        transport = new SocketTransport(InetAddress.getByName(this.nameServer), this.serverPort, 1500);
+        loop = new SelectorLoop();
+    }
+
+    public String nameServer() {
+        return nameServer;
+    }
+
+    public int serverPort() {
+        return serverPort;
     }
 
     @Override
@@ -44,10 +49,22 @@ public final class DODResolver implements Resolver {
                     "Failed to resolve the DNS query: request must have a header and question field to be considered valid"
             );
         }
-        try {
-            return GlobalUtility.tryWith(protocol.connect(null, transport), (transport) -> {
-                return request;
-            });
+        try (DatagramChannel channel = DatagramChannel.open()) {
+            channel.configureBlocking(false);
+            channel.connect(new InetSocketAddress(nameServer, serverPort));
+            AtomicReference<byte[]> response = new AtomicReference<>(null);
+            loop.start();
+            loop.register(channel, new DTLSSession(new SessionHandler(request.toWire(), response), true));
+            loop.join();
+            if (response.get() == null) {
+                return ResolverUtility.buildErrorResponse(
+                        request,
+                        Rcode.SERVFAIL,
+                        500,
+                        "Failed to resolve the DNS query: received no response from the upstream resolver"
+                );
+            }
+            return new Message(response.get());
         } catch (Exception exception) {
             return ResolverUtility.buildErrorResponse(
                     request,
@@ -55,12 +72,14 @@ public final class DODResolver implements Resolver {
                     500,
                     "Failed to resolve the DNS query: %s".formatted(exception.getMessage())
             );
+        } finally {
+            loop.stop();
         }
     }
 
     @Override
     public void close() throws IOException {
-        transport.close();
+        loop.stop();
     }
 
 }
