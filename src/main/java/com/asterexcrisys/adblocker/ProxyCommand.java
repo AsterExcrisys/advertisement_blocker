@@ -7,20 +7,28 @@ import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.services.TaskDispatcher;
 import com.asterexcrisys.adblocker.tasks.*;
-import com.asterexcrisys.adblocker.models.types.ServerMode;
+import com.asterexcrisys.adblocker.models.types.ProxyMode;
 import com.asterexcrisys.adblocker.models.records.TCPPacket;
 import com.asterexcrisys.adblocker.models.records.ThreadContext;
 import com.asterexcrisys.adblocker.models.records.UDPPacket;
 import com.asterexcrisys.adblocker.utility.CommandUtility;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-import java.io.File;
+import javax.net.ssl.*;
 import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -34,13 +42,13 @@ public class ProxyCommand implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyCommand.class);
 
     @Parameters(index = "0", description = "The path to the file containing a list of DNS name servers (resolvers) (one per line).", arity = "1")
-    private File nameServers;
+    private Path nameServers;
 
     @Parameters(index = "1", description = "The path to the file containing a list of filtered domains (one per line).", arity = "1")
-    private File filteredDomains;
+    private Path filteredDomains;
 
-    @Option(names = {"-sm", "--server-mode"}, description = "The mode of the server to use for receiving requests (either UDP-only, TCP-only, or both) (optional).", defaultValue = "UDP")
-    private ServerMode serverMode;
+    @Option(names = {"-sm", "--server-mode"}, description = "The mode of the server to use for receiving requests (either UDP-only, TCP-only, TLS-only, HTTP-only, HTTPS-only, or DEFAULT) (optional).", defaultValue = "UDP")
+    private ProxyMode serverMode;
 
     @Option(names = {"-sp", "--server-port"}, description = "The port on which the server should receive requests and send responses (optional).", defaultValue = "53")
     private int serverPort;
@@ -71,14 +79,14 @@ public class ProxyCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (!nameServers.exists() || !nameServers.isFile()) {
+        if (!Files.exists(nameServers) || !Files.isRegularFile(nameServers)) {
             throw new IllegalArgumentException("name servers must be a file");
         }
-        if (!filteredDomains.exists() || !filteredDomains.isFile()) {
+        if (!Files.exists(filteredDomains) || !Files.isRegularFile(filteredDomains)) {
             throw new IllegalArgumentException("filtered domains must be a file");
         }
         if (serverMode == null) {
-            throw new IllegalArgumentException("server mode must be specified as either 'UDP', 'TCP', or 'BOTH'");
+            throw new IllegalArgumentException("server mode must be specified as either 'UDP', 'TCP', 'TLS', 'HTTP', 'HTTPS', or 'DEFAULT'");
         }
         if (serverPort < 1 || serverPort > 65535) {
             throw new IllegalArgumentException("server port must be in the range [1, 65535]");
@@ -129,11 +137,11 @@ public class ProxyCommand implements Callable<Integer> {
             List<Thread> writers = new ArrayList<>(1);
             final List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
             final List<Future<?>> tcpHandlers = new ArrayList<>(minimumTasks);
-            if (serverMode == ServerMode.UDP || serverMode == ServerMode.BOTH) {
+            if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
                 readers.add(new UDPReader(udpSocket, udpRequests));
                 writers.add(new UDPWriter(udpSocket, udpResponses));
             }
-            if (serverMode == ServerMode.TCP || serverMode == ServerMode.BOTH) {
+            if (serverMode == ProxyMode.TCP || serverMode == ProxyMode.DEFAULT) {
                 readers.add(new TCPReader(tcpSocket, tcpRequests));
                 writers.add(new TCPWriter(tcpResponses));
             }
@@ -144,27 +152,18 @@ public class ProxyCommand implements Callable<Integer> {
                 writers.get(i).start();
             }
             for (int i = 0; i < minimumTasks; i++) {
-                if (serverMode == ServerMode.UDP || serverMode == ServerMode.BOTH) {
+                if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
                     udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
                 }
-                if (serverMode == ServerMode.TCP || serverMode == ServerMode.BOTH) {
+                if (serverMode == ProxyMode.TCP || serverMode == ProxyMode.DEFAULT) {
                     tcpHandlers.add(executor.submit(new TCPHandler(contextManager, tcpRequests, tcpResponses)));
                 }
             }
             LOGGER.info("DNS Ad-Blocking Proxy with mode '{}' started on port {}", serverMode, serverPort);
-            scheduler.scheduleWithFixedDelay(new TaskDispatcher(
-                    executor,
-                    udpRequests,
-                    udpResponses,
-                    tcpRequests,
-                    tcpResponses,
-                    udpHandlers,
-                    tcpHandlers,
-                    contextManager,
-                    requestsLimit,
-                    minimumTasks,
-                    maximumTasks
-            ), 10000, 10000, TimeUnit.MILLISECONDS);
+            TaskDispatcher dispatcher = new TaskDispatcher(executor, contextManager, requestsLimit, minimumTasks, maximumTasks);
+            dispatcher.addUDP(udpRequests, udpResponses, udpHandlers);
+            dispatcher.addTCP(tcpRequests, tcpResponses, tcpHandlers, false);
+            scheduler.scheduleWithFixedDelay(dispatcher, 10000, 10000, TimeUnit.MILLISECONDS);
             Thread.currentThread().join();
             return ExitCode.OK;
         } catch (InterruptedException exception) {
@@ -197,6 +196,40 @@ public class ProxyCommand implements Callable<Integer> {
             thread.setDaemon(false);
             return thread;
         });
+    }
+
+    public ServerSocket initializeServer(String certificate, char[] password, int serverPort) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(ProxyCommand.class.getResourceAsStream("%s.jks".formatted(certificate)), password);
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        keyManagerFactory.init(keyStore, password);
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(keyManagerFactory.getKeyManagers(), null, null);
+        SSLServerSocketFactory serverSocketFactory = context.getServerSocketFactory();
+        return serverSocketFactory.createServerSocket(serverPort);
+    }
+
+    public HttpServer initializeWebServer(String certificate, char[] password, int serverPort) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(ProxyCommand.class.getResourceAsStream("%s.jks".formatted(certificate)), password);
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        keyManagerFactory.init(keyStore, password);
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+        trustManagerFactory.init((KeyStore) null);
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+        HttpsServer server = HttpsServer.create(new InetSocketAddress(serverPort), 0);
+        server.setHttpsConfigurator(new HttpsConfigurator(context) {
+            @Override
+            public void configure(HttpsParameters parameters) {
+                SSLEngine engine = getSSLContext().createSSLEngine();
+                parameters.setNeedClientAuth(false);
+                parameters.setProtocols(engine.getEnabledProtocols());
+                parameters.setCipherSuites(engine.getEnabledCipherSuites());
+                parameters.setSSLParameters(getSSLContext().getDefaultSSLParameters());
+            }
+        });
+        return server;
     }
 
     public ThreadContext initializeContext() throws Exception {

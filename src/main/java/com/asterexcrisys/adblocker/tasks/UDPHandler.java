@@ -7,6 +7,7 @@ import com.asterexcrisys.adblocker.utility.GlobalUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Message;
+import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -23,7 +24,7 @@ public class UDPHandler implements Runnable {
 
     public UDPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
         this.contextManager = Objects.requireNonNull(contextManager);
-        this.context = Objects.requireNonNull(contextManager.get());
+        this.context = Objects.requireNonNull(this.contextManager.get());
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -35,17 +36,25 @@ public class UDPHandler implements Runnable {
             ProxyManager manager = context.manager();
             while (!Thread.currentThread().isInterrupted()) {
                 UDPPacket requestPacket = requests.take();
+                InetSocketAddress clientSocket = requestPacket.transport();
                 Message request = new Message(requestPacket.data());
                 Message response = GlobalUtility.acquireAccess(lock, () -> manager.handle(request));
                 UDPPacket responsePacket = UDPPacket.of(
-                        requestPacket.address(),
-                        requestPacket.port(),
+                        requestPacket.transport(),
                         response.toWire()
                 );
                 if (responses.offer(responsePacket)) {
-                    LOGGER.info("Succeeded to send UDP response to {}:{}", requestPacket.address(), requestPacket.port());
+                    LOGGER.info(
+                            "Succeeded to send UDP response to {}:{}",
+                            clientSocket.getAddress().getHostAddress(),
+                            clientSocket.getPort()
+                    );
                 } else {
-                    LOGGER.warn("Failed to send UDP response to {}:{}", requestPacket.address(), requestPacket.port());
+                    LOGGER.warn(
+                            "Failed to send UDP response to {}:{}",
+                            clientSocket.getAddress().getHostAddress(),
+                            clientSocket.getPort()
+                    );
                 }
             }
         } catch (Exception exception) {

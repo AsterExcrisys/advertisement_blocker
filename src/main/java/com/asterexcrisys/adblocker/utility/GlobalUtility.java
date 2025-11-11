@@ -33,6 +33,14 @@ public final class GlobalUtility {
         return list;
     }
 
+    public static <T> T tryOrDefault(Callable<T> callable, T defaultValue) {
+        try {
+            return callable.call();
+        } catch (Exception ignored) {
+            return defaultValue;
+        }
+    }
+
     public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {
         lock.lockInterruptibly();
         try {

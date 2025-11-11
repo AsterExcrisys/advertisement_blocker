@@ -5,6 +5,8 @@ import com.asterexcrisys.adblocker.models.types.DNSProtocol;
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
 import com.asterexcrisys.adblocker.models.types.ResolverType;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,8 +22,8 @@ public final class CommandUtility {
         DOMAIN_PATTERN = Pattern.compile("^(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}$");
     }
 
-    public static List<Resolver> parseNameServers(File file) throws Exception {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+    public static List<Resolver> parseNameServers(Path file) throws Exception {
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
             List<Resolver> nameServers = new ArrayList<>();
             Set<String> lines = new HashSet<>();
             String line;
@@ -36,8 +38,8 @@ public final class CommandUtility {
         }
     }
 
-    public static List<String> parseFilteredDomains(File file) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+    public static List<String> parseFilteredDomains(Path file) throws IOException {
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
             List<String> filteredDomains = new ArrayList<>();
             Set<String> lines = new HashSet<>();
             String line;
@@ -83,17 +85,6 @@ public final class CommandUtility {
                     yield new SECResolver(resolveDomainIfNecessary(parts[1]), parts[2]);
                 } else {
                     yield new SECResolver(resolveDomainIfNecessary(parts[1]), parts[2], DNSProtocol.valueOf(parts[3].toUpperCase()));
-                }
-            }
-            case DOD -> {
-                String[] parts = line.split(":");
-                if (parts.length < 2 || parts.length > 3) {
-                    throw new IllegalArgumentException("line must contain the resolver address and port (optional) (DOD)");
-                }
-                if (parts.length == 2) {
-                    yield new DODResolver(resolveDomainIfNecessary(parts[1]));
-                } else {
-                    yield new DODResolver(resolveDomainIfNecessary(parts[1]), Integer.parseInt(parts[2]));
                 }
             }
             case DOT -> {

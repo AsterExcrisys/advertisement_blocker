@@ -24,15 +24,15 @@ public class TCPWriter extends Thread {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 TCPPacket responsePacket = responses.take();
-                Socket clientSocket = responsePacket.socket();
+                Socket clientSocket = responsePacket.transport();
                 if (clientSocket.isClosed() || clientSocket.isOutputShutdown()) {
                     continue;
                 }
                 OutputStream output = clientSocket.getOutputStream();
-                byte[] data = responsePacket.data();
-                output.write((data.length >> 8) & 0xFF);
-                output.write(data.length & 0xFF);
-                output.write(data);
+                byte[] response = responsePacket.data();
+                output.write((response.length >> 8) & 0xFF);
+                output.write(response.length & 0xFF);
+                output.write(response);
                 output.flush();
             }
         } catch (Exception exception) {

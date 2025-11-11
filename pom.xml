@@ -26,11 +26,6 @@
             <version>3.6.3</version>
         </dependency>
         <dependency>
-            <groupId>org.snf4j</groupId>
-            <artifactId>snf4j-core</artifactId>
-            <version>1.11.1</version>
-        </dependency>
-        <dependency>
             <groupId>tech.kwik</groupId>
             <artifactId>kwik</artifactId>
             <version>0.10.7</version>

@@ -1,28 +1,28 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.services.ProxyManager;
-import com.asterexcrisys.adblocker.models.records.TCPPacket;
+import com.asterexcrisys.adblocker.models.records.HTTPPacket;
 import com.asterexcrisys.adblocker.models.records.ThreadContext;
+import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.sun.net.httpserver.HttpExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Message;
-import java.net.Socket;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
-public class TCPHandler implements Runnable {
+public class HTTPHandler implements Runnable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TCPHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HTTPHandler.class);
 
     private final ThreadLocal<ThreadContext> contextManager;
     private final ThreadContext context;
-    private final BlockingQueue<TCPPacket> requests;
-    private final BlockingQueue<TCPPacket> responses;
+    private final BlockingQueue<HTTPPacket> requests;
+    private final BlockingQueue<HTTPPacket> responses;
 
-    public TCPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<TCPPacket> requests, BlockingQueue<TCPPacket> responses) {
+    public HTTPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<HTTPPacket> requests, BlockingQueue<HTTPPacket> responses) {
         this.contextManager = Objects.requireNonNull(contextManager);
         this.context = Objects.requireNonNull(this.contextManager.get());
         this.requests = Objects.requireNonNull(requests);
@@ -35,30 +35,30 @@ public class TCPHandler implements Runnable {
             ReentrantLock lock = context.lock();
             ProxyManager manager = context.manager();
             while (!Thread.currentThread().isInterrupted()) {
-                TCPPacket requestPacket = requests.take();
-                Socket clientSocket = requestPacket.transport();
+                HTTPPacket requestPacket = requests.take();
+                HttpExchange exchange = requestPacket.transport();
                 Message request = new Message(requestPacket.data());
                 Message response = GlobalUtility.acquireAccess(lock, () -> manager.handle(request));
-                TCPPacket responsePacket = TCPPacket.of(
-                        clientSocket,
+                HTTPPacket responsePacket = HTTPPacket.of(
+                        exchange,
                         response.toWire()
                 );
                 if (responses.offer(responsePacket)) {
                     LOGGER.info(
-                            "Succeeded to send TCP response to {}:{}",
-                            clientSocket.getLocalAddress().getHostAddress(),
-                            clientSocket.getLocalPort()
+                            "Succeeded to send HTTP response to {}:{}",
+                            exchange.getRemoteAddress().getAddress().getHostAddress(),
+                            exchange.getRemoteAddress().getPort()
                     );
                 } else {
                     LOGGER.warn(
-                            "Failed to send TCP response to {}:{}",
-                            clientSocket.getLocalAddress().getHostAddress(),
-                            clientSocket.getLocalPort()
+                            "Failed to send HTTP response to {}:{}",
+                            exchange.getRemoteAddress().getAddress().getHostAddress(),
+                            exchange.getRemoteAddress().getPort()
                     );
                 }
             }
         } catch (Exception exception) {
-            LOGGER.error("Failed to handle TCP request: {}", exception.getMessage());
+            LOGGER.error("Failed to handle HTTP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         } finally {
             contextManager.remove();

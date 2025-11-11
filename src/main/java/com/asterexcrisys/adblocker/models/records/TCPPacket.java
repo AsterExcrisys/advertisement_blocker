@@ -4,15 +4,15 @@ import java.net.Socket;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public record TCPPacket(Socket socket, byte[] data) {
+public record TCPPacket(Socket transport, byte[] data) implements Packet<Socket> {
 
     public TCPPacket {
-        Objects.requireNonNull(socket);
+        Objects.requireNonNull(transport);
         Objects.requireNonNull(data);
     }
 
-    public static TCPPacket of(Socket socket, byte[] data) {
-        return new TCPPacket(socket, data);
+    public static TCPPacket of(Socket transport, byte[] data) {
+        return new TCPPacket(transport, data);
     }
 
 }

@@ -4,7 +4,6 @@ package com.asterexcrisys.adblocker.models.types;
 public enum ResolverType {
     STD,
     SEC,
-    DOD,
     DOT,
     DOQ,
     DOH

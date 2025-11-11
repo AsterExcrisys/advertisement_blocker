@@ -3,6 +3,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### SSL Certificates/Keystores/Truststores ###
+.jks
+.jceks
+.keystore
+.truststore
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

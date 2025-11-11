@@ -29,8 +29,7 @@ public class UDPWriter extends Thread {
                 DatagramPacket packet = new DatagramPacket(
                         responsePacket.data(),
                         responsePacket.data().length,
-                        responsePacket.address(),
-                        responsePacket.port()
+                        responsePacket.transport()
                 );
                 socket.send(packet);
             }

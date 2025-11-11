@@ -1,8 +1,11 @@
 package com.asterexcrisys.adblocker.models.types;
 
 @SuppressWarnings("unused")
-public enum ServerMode {
+public enum ProxyMode {
     UDP,
     TCP,
-    BOTH
+    TLS,
+    HTTP,
+    HTTPS,
+    DEFAULT
 }
