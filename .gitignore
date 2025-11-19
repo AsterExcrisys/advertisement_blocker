@@ -4,10 +4,10 @@ target/
 !**/src/test/**/target/
 
 ### SSL Certificates/Keystores/Truststores ###
-.jks
-.jceks
-.keystore
-.truststore
+*.jks
+*.jceks
+*.keystore
+*.truststore
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

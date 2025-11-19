@@ -79,11 +79,11 @@ public class ProxyCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (!Files.exists(nameServers) || !Files.isRegularFile(nameServers)) {
-            throw new IllegalArgumentException("name servers must be a file");
+        if (nameServers == null || !Files.exists(nameServers) || !Files.isRegularFile(nameServers)) {
+            throw new IllegalArgumentException("name servers must be a valid text file");
         }
-        if (!Files.exists(filteredDomains) || !Files.isRegularFile(filteredDomains)) {
-            throw new IllegalArgumentException("filtered domains must be a file");
+        if (nameServers == null || !Files.exists(filteredDomains) || !Files.isRegularFile(filteredDomains)) {
+            throw new IllegalArgumentException("filtered domains must be a valid text file");
         }
         if (serverMode == null) {
             throw new IllegalArgumentException("server mode must be specified as either 'UDP', 'TCP', 'TLS', 'HTTP', 'HTTPS', or 'DEFAULT'");

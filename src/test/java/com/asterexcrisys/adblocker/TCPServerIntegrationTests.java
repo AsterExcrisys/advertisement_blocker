@@ -3,6 +3,7 @@ package com.asterexcrisys.adblocker;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -10,17 +11,21 @@ import java.net.Socket;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TCPServerIntegrationTests {
 
-    private Socket socket;
+    private Socket standardSocket;
+    private Socket secureSocket;
 
     @BeforeAll
     public void setUp() throws IOException {
-        socket = new Socket();
-        socket.connect(new InetSocketAddress("127.0.0.1", 53));
+        standardSocket = new Socket();
+        secureSocket = SSLSocketFactory.getDefault().createSocket();
+        standardSocket.connect(new InetSocketAddress("127.0.0.1", 53));
+        secureSocket.connect(new InetSocketAddress("127.0.0.1", 853));
     }
 
     @AfterAll
     public void tearDown() throws IOException {
-        socket.close();
+        standardSocket.close();
+        secureSocket.close();
     }
 
 }
