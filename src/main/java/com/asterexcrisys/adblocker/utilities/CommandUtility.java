@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.utility;
+package com.asterexcrisys.adblocker.utilities;
 
 import com.asterexcrisys.adblocker.resolvers.*;
 import com.asterexcrisys.adblocker.models.types.DNSProtocol;

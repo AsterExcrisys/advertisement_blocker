@@ -2,7 +2,7 @@ package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.models.records.HTTPPacket;
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
-import com.asterexcrisys.adblocker.utility.GlobalUtility;
+import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.slf4j.Logger;

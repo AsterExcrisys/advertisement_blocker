@@ -1,7 +1,7 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.models.types.DNSProtocol;
-import com.asterexcrisys.adblocker.utility.ResolverUtility;
+import com.asterexcrisys.adblocker.utilities.ResolverUtility;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;

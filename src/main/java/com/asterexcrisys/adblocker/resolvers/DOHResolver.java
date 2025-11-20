@@ -1,7 +1,7 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
-import com.asterexcrisys.adblocker.utility.ResolverUtility;
+import com.asterexcrisys.adblocker.utilities.ResolverUtility;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;

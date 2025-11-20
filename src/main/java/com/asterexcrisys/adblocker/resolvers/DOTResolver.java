@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utility.ResolverUtility;
+import com.asterexcrisys.adblocker.utilities.ResolverUtility;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import javax.net.ssl.SSLSocketFactory;

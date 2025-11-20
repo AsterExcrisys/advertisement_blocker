@@ -11,7 +11,7 @@ import com.asterexcrisys.adblocker.models.types.ProxyMode;
 import com.asterexcrisys.adblocker.models.records.TCPPacket;
 import com.asterexcrisys.adblocker.models.records.ThreadContext;
 import com.asterexcrisys.adblocker.models.records.UDPPacket;
-import com.asterexcrisys.adblocker.utility.CommandUtility;
+import com.asterexcrisys.adblocker.utilities.CommandUtility;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;

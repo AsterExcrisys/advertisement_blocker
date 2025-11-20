@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.utility;
+package com.asterexcrisys.adblocker.utilities;
 
 import org.xbill.DNS.*;
 import java.nio.ByteBuffer;

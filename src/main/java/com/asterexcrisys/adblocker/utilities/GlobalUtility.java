@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.utility;
+package com.asterexcrisys.adblocker.utilities;
 
 import com.asterexcrisys.adblocker.GlobalSettings;
 import com.asterexcrisys.adblocker.resolvers.Resolver;
