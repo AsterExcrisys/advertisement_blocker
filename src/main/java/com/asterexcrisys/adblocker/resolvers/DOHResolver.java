@@ -30,7 +30,7 @@ public final class DOHResolver implements Resolver {
                 .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
-                .protocols(List.of(Protocol.HTTP_2, Protocol.HTTP_3))
+                .protocols(List.of(Protocol.HTTP_1_1, Protocol.HTTP_2, Protocol.HTTP_3))
                 .build();
     }
 
@@ -43,7 +43,7 @@ public final class DOHResolver implements Resolver {
                 .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
-                .protocols(List.of(Protocol.HTTP_2, Protocol.HTTP_3))
+                .protocols(List.of(Protocol.HTTP_1_1, Protocol.HTTP_2, Protocol.HTTP_3))
                 .build();
     }
 
@@ -56,7 +56,7 @@ public final class DOHResolver implements Resolver {
                 .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
-                .protocols(List.of(Protocol.HTTP_2, Protocol.HTTP_3))
+                .protocols(List.of(Protocol.HTTP_1_1, Protocol.HTTP_2, Protocol.HTTP_3))
                 .build();
     }
 
@@ -69,7 +69,7 @@ public final class DOHResolver implements Resolver {
                 .callTimeout(Duration.ofSeconds(5))
                 .readTimeout(Duration.ofSeconds(5))
                 .retryOnConnectionFailure(true)
-                .protocols(List.of(Protocol.HTTP_2, Protocol.HTTP_3))
+                .protocols(List.of(Protocol.HTTP_1_1, Protocol.HTTP_2, Protocol.HTTP_3))
                 .build();
     }
 
