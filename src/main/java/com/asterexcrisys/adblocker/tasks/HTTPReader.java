@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.models.records.HTTPPacket;
+import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
 import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import com.sun.net.httpserver.HttpExchange;

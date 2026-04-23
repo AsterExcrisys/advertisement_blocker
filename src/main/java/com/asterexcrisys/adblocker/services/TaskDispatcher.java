@@ -4,12 +4,12 @@ import com.asterexcrisys.adblocker.dispatchers.Dispatcher;
 import com.asterexcrisys.adblocker.dispatchers.HTTPDispatcher;
 import com.asterexcrisys.adblocker.dispatchers.TCPDispatcher;
 import com.asterexcrisys.adblocker.dispatchers.UDPDispatcher;
-import com.asterexcrisys.adblocker.models.records.HTTPPacket;
-import com.asterexcrisys.adblocker.models.records.TCPPacket;
-import com.asterexcrisys.adblocker.models.records.ThreadContext;
-import com.asterexcrisys.adblocker.models.records.UDPPacket;
+import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
+import com.asterexcrisys.adblocker.models.packets.TCPPacket;
+import com.asterexcrisys.adblocker.models.packets.UDPPacket;
 import com.asterexcrisys.adblocker.models.types.DispatchType;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
+import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public class TaskDispatcher implements Runnable {
 
     private final Map<ProxyMode, Dispatcher> dispatchers;
     private final ExecutorService executor;
-    private final ThreadLocal<ThreadContext> contextManager;
+    private final ContextPool<ProxyManager> contextPool;
     private final int requestsLimit;
     private final int minimumTasks;
     private final int maximumTasks;
@@ -36,17 +36,17 @@ public class TaskDispatcher implements Runnable {
     public TaskDispatcher() {
         dispatchers = new HashMap<>();
         executor = null;
-        contextManager = null;
+        contextPool = null;
         requestsLimit = 0;
         minimumTasks = 0;
         maximumTasks = 0;
         hasFallback = false;
     }
 
-    public TaskDispatcher(ExecutorService executor, ThreadLocal<ThreadContext> contextManager, int requestsLimit, int minimumTasks, int maximumTasks) {
+    public TaskDispatcher(ExecutorService executor, ContextPool<ProxyManager> contextPool, int requestsLimit, int minimumTasks, int maximumTasks) {
         dispatchers = new HashMap<>();
         this.executor = Objects.requireNonNull(executor);
-        this.contextManager = Objects.requireNonNull(contextManager);
+        this.contextPool = Objects.requireNonNull(contextPool);
         this.requestsLimit = requestsLimit;
         this.minimumTasks = minimumTasks;
         this.maximumTasks = maximumTasks;
@@ -72,7 +72,7 @@ public class TaskDispatcher implements Runnable {
                 udpRequests,
                 udpResponses,
                 udpHandlers,
-                contextManager,
+                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks
@@ -91,7 +91,7 @@ public class TaskDispatcher implements Runnable {
                 tcpRequests,
                 tcpResponses,
                 tcpHandlers,
-                contextManager,
+                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks,
@@ -111,7 +111,7 @@ public class TaskDispatcher implements Runnable {
                 httpRequests,
                 httpResponses,
                 httpHandlers,
-                contextManager,
+                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks,

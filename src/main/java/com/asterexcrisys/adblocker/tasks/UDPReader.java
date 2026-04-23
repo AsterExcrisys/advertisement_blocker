@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.models.records.UDPPacket;
+import com.asterexcrisys.adblocker.models.packets.UDPPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.DatagramPacket;

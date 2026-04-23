@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.matchers;
 
-import com.asterexcrisys.adblocker.services.DomainTrie;
+import com.asterexcrisys.adblocker.services.domains.DomainTrie;
 import java.util.Collection;
 import java.util.Objects;
 

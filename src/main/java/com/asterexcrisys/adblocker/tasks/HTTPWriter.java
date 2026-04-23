@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.tasks;
 
-import com.asterexcrisys.adblocker.models.records.HTTPPacket;
+import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
 import com.sun.net.httpserver.HttpExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -3,6 +3,8 @@ package com.asterexcrisys.adblocker.utilities;
 import com.asterexcrisys.adblocker.GlobalSettings;
 import com.asterexcrisys.adblocker.resolvers.Resolver;
 import com.asterexcrisys.adblocker.resolvers.STDResolver;
+import com.asterexcrisys.adblocker.services.contexts.ContextLease;
+import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -13,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
@@ -41,23 +43,19 @@ public final class GlobalUtility {
         }
     }
 
-    public static <T> T acquireAccess(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {
-        lock.lockInterruptibly();
-        try {
-            return supplier.get();
-        } finally {
-            lock.unlock();
+    public static <T extends AutoCloseable, R> R acquireAccess(ContextPool<T> pool, Function<T, R> function) throws InterruptedException {
+        try (ContextLease<T> lease = pool.acquire()) {
+            return function.apply(lease.get());
         }
     }
 
-    public static <T> Optional<T> acquireAccessOrTimeout(ReentrantLock lock, Supplier<T> supplier) throws InterruptedException {
-        if (!lock.tryLock(SETTINGS.getRequestTimeout(), TimeUnit.MILLISECONDS)) {
+    public static <T extends AutoCloseable, R> Optional<R> acquireAccessOrTimeout(ContextPool<T> pool, Function<T, R> function) throws InterruptedException {
+        Optional<ContextLease<T>> optional = pool.tryAcquire(SETTINGS.getRequestTimeout(), TimeUnit.MILLISECONDS);
+        if (optional.isEmpty()) {
             return Optional.empty();
         }
-        try {
-            return Optional.of(supplier.get());
-        } finally {
-            lock.unlock();
+        try (ContextLease<T> lease = optional.get()) {
+            return Optional.of(function.apply(lease.get()));
         }
     }
 

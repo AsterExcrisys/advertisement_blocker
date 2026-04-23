@@ -5,6 +5,8 @@ import picocli.CommandLine;
 @SuppressWarnings("unused")
 public class Application {
 
+    // TODO: implement TLS, HTTP, and HTTPS modes as well as make them dynamically dispatchable
+
     public static void main(String[] arguments) {
         CommandLine command = new CommandLine(new ProxyCommand());
         command.setParameterExceptionHandler(new ExceptionHandler());

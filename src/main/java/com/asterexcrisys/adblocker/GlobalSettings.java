@@ -21,23 +21,16 @@ public final class GlobalSettings {
         this.requestTimeout.set(requestTimeout);
     }
 
-    public static GlobalSettings getInstance() {
-        if (INSTANCE != null) {
-            return INSTANCE;
-        }
-        synchronized (GlobalSettings.class) {
-            if (INSTANCE == null) {
-                INSTANCE = new GlobalSettings();
-            }
+    public synchronized static GlobalSettings getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new GlobalSettings();
         }
         return INSTANCE;
     }
 
-    public static void clearInstance() {
-        synchronized (GlobalSettings.class) {
-            if (INSTANCE != null) {
-                INSTANCE = null;
-            }
+    public synchronized static void clearInstance() {
+        if (INSTANCE != null) {
+            INSTANCE = null;
         }
     }
 

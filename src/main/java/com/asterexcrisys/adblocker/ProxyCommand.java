@@ -6,11 +6,11 @@ import com.asterexcrisys.adblocker.matchers.ExactMatcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
 import com.asterexcrisys.adblocker.services.ProxyManager;
 import com.asterexcrisys.adblocker.services.TaskDispatcher;
+import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.tasks.*;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
-import com.asterexcrisys.adblocker.models.records.TCPPacket;
-import com.asterexcrisys.adblocker.models.records.ThreadContext;
-import com.asterexcrisys.adblocker.models.records.UDPPacket;
+import com.asterexcrisys.adblocker.models.packets.TCPPacket;
+import com.asterexcrisys.adblocker.models.packets.UDPPacket;
 import com.asterexcrisys.adblocker.utilities.CommandUtility;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -32,8 +32,6 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
 @Command(name = "proxy", mixinStandardHelpOptions = true, version = "1.0.0", description = "Starts a DNS Ad-Blocking Proxy with the given, or otherwise default (if applicable), parameters.")
@@ -114,27 +112,23 @@ public class ProxyCommand implements Callable<Integer> {
                 Math.max(Math.floorDiv(maximumTasks, 5), 1),
                 Runtime.getRuntime().availableProcessors()
         );
-        final ThreadContext[] availableContexts = new ThreadContext[contextPoolSize];
+        final List<ProxyManager> contexts = new ArrayList<>(contextPoolSize);
         for (int i = 0; i < contextPoolSize; i++) {
-            availableContexts[i] = initializeContext();
+            contexts.add(initializeContext());
         }
-        AtomicInteger taskCounter = new AtomicInteger(0);
-        ThreadLocal<ThreadContext> contextManager = ThreadLocal.withInitial(() -> {
-            int contextIndex = taskCounter.getAndIncrement() % contextPoolSize;
-            return availableContexts[contextIndex];
-        });
         try (
                 ExecutorService executor = initializeExecutor();
                 ScheduledExecutorService scheduler = initializeScheduler();
+                ContextPool<ProxyManager> contextPool = new ContextPool<>(contexts);
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
                 ServerSocket tcpSocket = new ServerSocket(serverPort)
         ) {
-            BlockingQueue<UDPPacket> udpRequests = new LinkedBlockingQueue<>();
-            BlockingQueue<UDPPacket> udpResponses = new LinkedBlockingQueue<>();
-            BlockingQueue<TCPPacket> tcpRequests = new LinkedBlockingQueue<>();
-            BlockingQueue<TCPPacket> tcpResponses = new LinkedBlockingQueue<>();
-            List<Thread> readers = new ArrayList<>(1);
-            List<Thread> writers = new ArrayList<>(1);
+            BlockingQueue<UDPPacket> udpRequests = new ArrayBlockingQueue<>(requestsLimit * maximumTasks);
+            BlockingQueue<UDPPacket> udpResponses = new ArrayBlockingQueue<>(requestsLimit * maximumTasks);
+            BlockingQueue<TCPPacket> tcpRequests = new ArrayBlockingQueue<>(requestsLimit * maximumTasks);
+            BlockingQueue<TCPPacket> tcpResponses = new ArrayBlockingQueue<>(requestsLimit * maximumTasks);
+            List<Thread> readers = new ArrayList<>(5);
+            List<Thread> writers = new ArrayList<>(5);
             final List<Future<?>> udpHandlers = new ArrayList<>(minimumTasks);
             final List<Future<?>> tcpHandlers = new ArrayList<>(minimumTasks);
             if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
@@ -153,14 +147,14 @@ public class ProxyCommand implements Callable<Integer> {
             }
             for (int i = 0; i < minimumTasks; i++) {
                 if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
-                    udpHandlers.add(executor.submit(new UDPHandler(contextManager, udpRequests, udpResponses)));
+                    udpHandlers.add(executor.submit(new UDPHandler(contextPool, udpRequests, udpResponses)));
                 }
                 if (serverMode == ProxyMode.TCP || serverMode == ProxyMode.DEFAULT) {
-                    tcpHandlers.add(executor.submit(new TCPHandler(contextManager, tcpRequests, tcpResponses)));
+                    tcpHandlers.add(executor.submit(new TCPHandler(contextPool, tcpRequests, tcpResponses)));
                 }
             }
             LOGGER.info("DNS Ad-Blocking Proxy with mode '{}' started on port {}", serverMode, serverPort);
-            TaskDispatcher dispatcher = new TaskDispatcher(executor, contextManager, requestsLimit, minimumTasks, maximumTasks);
+            TaskDispatcher dispatcher = new TaskDispatcher(executor, contextPool, requestsLimit, minimumTasks, maximumTasks);
             dispatcher.addUDP(udpRequests, udpResponses, udpHandlers);
             dispatcher.addTCP(tcpRequests, tcpResponses, tcpHandlers, false);
             scheduler.scheduleWithFixedDelay(dispatcher, 10000, 10000, TimeUnit.MILLISECONDS);
@@ -170,11 +164,6 @@ public class ProxyCommand implements Callable<Integer> {
             LOGGER.info("DNS Ad-Blocking Proxy is starting the shutdown sequence due to: {}", exception.getMessage());
             Thread.currentThread().interrupt();
             return ExitCode.SOFTWARE;
-        } finally {
-            for (int i = 0; i < contextPoolSize; i++) {
-                availableContexts[i].clear();
-            }
-            contextManager.remove();
         }
     }
 
@@ -232,15 +221,14 @@ public class ProxyCommand implements Callable<Integer> {
         return server;
     }
 
-    public ThreadContext initializeContext() throws Exception {
-        ReentrantLock lock = new ReentrantLock();
+    public ProxyManager initializeContext() throws Exception {
         ProxyManager manager = new ProxyManager(shouldRetry);
         manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
         manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
         manager.addResolvers(CommandUtility.parseNameServers(nameServers));
         manager.addFilteredDomains(CommandUtility.parseFilteredDomains(filteredDomains));
         manager.setCacheMaximumSize(cacheLimit);
-        return ThreadContext.of(lock, manager);
+        return manager;
     }
 
 }

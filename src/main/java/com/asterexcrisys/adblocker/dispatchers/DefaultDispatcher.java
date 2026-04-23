@@ -1,6 +1,6 @@
 package com.asterexcrisys.adblocker.dispatchers;
 
-import com.asterexcrisys.adblocker.models.records.Packet;
+import com.asterexcrisys.adblocker.models.packets.Packet;
 import com.asterexcrisys.adblocker.models.types.DispatchType;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
 import java.util.List;

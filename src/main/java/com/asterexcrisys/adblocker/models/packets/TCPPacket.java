@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.models.records;
+package com.asterexcrisys.adblocker.models.packets;
 
 import java.net.Socket;
 import java.util.Objects;

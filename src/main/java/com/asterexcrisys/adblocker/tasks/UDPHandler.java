@@ -1,8 +1,8 @@
 package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.services.ProxyManager;
-import com.asterexcrisys.adblocker.models.records.ThreadContext;
-import com.asterexcrisys.adblocker.models.records.UDPPacket;
+import com.asterexcrisys.adblocker.models.packets.UDPPacket;
+import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,21 +10,18 @@ import org.xbill.DNS.Message;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("unused")
 public class UDPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UDPHandler.class);
 
-    private final ThreadLocal<ThreadContext> contextManager;
-    private final ThreadContext context;
+    private final ContextPool<ProxyManager> contextPool;
     private final BlockingQueue<UDPPacket> requests;
     private final BlockingQueue<UDPPacket> responses;
 
-    public UDPHandler(ThreadLocal<ThreadContext> contextManager, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
-        this.contextManager = Objects.requireNonNull(contextManager);
-        this.context = Objects.requireNonNull(this.contextManager.get());
+    public UDPHandler(ContextPool<ProxyManager> contextPool, BlockingQueue<UDPPacket> requests, BlockingQueue<UDPPacket> responses) {
+        this.contextPool = Objects.requireNonNull(contextPool);
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -32,13 +29,13 @@ public class UDPHandler implements Runnable {
     @Override
     public void run() {
         try {
-            ReentrantLock lock = context.lock();
-            ProxyManager manager = context.manager();
             while (!Thread.currentThread().isInterrupted()) {
                 UDPPacket requestPacket = requests.take();
                 InetSocketAddress clientSocket = requestPacket.transport();
                 Message request = new Message(requestPacket.data());
-                Message response = GlobalUtility.acquireAccess(lock, () -> manager.handle(request));
+                Message response = GlobalUtility.acquireAccess(contextPool, (context) -> {
+                    return context.handle(request);
+                });
                 UDPPacket responsePacket = UDPPacket.of(
                         requestPacket.transport(),
                         response.toWire()
@@ -60,8 +57,6 @@ public class UDPHandler implements Runnable {
         } catch (Exception exception) {
             LOGGER.error("Failed to handle UDP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
-        } finally {
-            contextManager.remove();
         }
     }
 

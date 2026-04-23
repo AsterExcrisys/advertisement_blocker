@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.models.records;
+package com.asterexcrisys.adblocker.models.packets;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.util.Objects;
