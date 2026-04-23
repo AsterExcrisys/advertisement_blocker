@@ -171,8 +171,8 @@ public class ProxyCommand implements Callable<Integer> {
         return new ThreadPoolExecutor(
                 minimumTasks,
                 Runtime.getRuntime().availableProcessors(),
-                60L,
-                TimeUnit.SECONDS,
+                60000,
+                TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(maximumTasks),
                 Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
