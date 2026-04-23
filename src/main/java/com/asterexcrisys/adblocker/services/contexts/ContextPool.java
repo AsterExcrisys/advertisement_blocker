@@ -5,6 +5,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("unused")
 public class ContextPool<T extends AutoCloseable> implements AutoCloseable {
 
     private final BlockingQueue<T> pool;

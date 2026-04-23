@@ -2,6 +2,7 @@ package com.asterexcrisys.adblocker.services.contexts;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class ContextLease<T extends AutoCloseable> implements AutoCloseable {
 
     private final ContextPool<T> pool;
