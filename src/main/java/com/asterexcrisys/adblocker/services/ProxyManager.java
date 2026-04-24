@@ -227,10 +227,12 @@ public class ProxyManager implements AutoCloseable {
                 "Failed to resolve the DNS query: no available resolvers were found"
         );
         for (Map.Entry<Resolver, CircuitBreaker> entry : resolvers.entrySet()) {
-            if (entry.getValue().getState() != State.CLOSED && entry.getValue().getState() != State.HALF_OPEN) {
+            Resolver resolver = entry.getKey();
+            CircuitBreaker circuitBreaker = entry.getValue();
+            if (circuitBreaker.getState() != State.CLOSED && circuitBreaker.getState() != State.HALF_OPEN) {
                 continue;
             }
-            response = entry.getValue().executeSupplier(() -> entry.getKey().resolve(request));
+            response = circuitBreaker.executeSupplier(() -> resolver.resolve(request));
             if (!isRetryingEnabled) {
                 break;
             }
