@@ -14,13 +14,11 @@ public class WildcardMatchBlacklistFilterUnitTests {
 
     @BeforeAll
     public void setUp() {
-        filter = new BlacklistFilter();
-        filter.setMatcher(new WildcardMatcher());
-        filter.load(List.of(
+        filter = new BlacklistFilter(new WildcardMatcher(List.of(
                 "google.com", "youtube.com", "facebook.com",
                 "apple.com", "amazon.com", "microsoft.com",
                 "*.altervista.org", "*.net", "*.io"
-        ));
+        )));
     }
 
     @Test

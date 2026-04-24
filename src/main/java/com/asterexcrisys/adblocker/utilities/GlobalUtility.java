@@ -35,6 +35,13 @@ public final class GlobalUtility {
         return list;
     }
 
+    public static <T> T switchReturn(boolean condition, Supplier<T> trueSupplier, Supplier<T> falseSupplier) {
+        if (condition) {
+            return trueSupplier.get();
+        }
+        return falseSupplier.get();
+    }
+
     public static <T> T tryOrDefault(Callable<T> callable, T defaultValue) {
         try {
             return callable.call();

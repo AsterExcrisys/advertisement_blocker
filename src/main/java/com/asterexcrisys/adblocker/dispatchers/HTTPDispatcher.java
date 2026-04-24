@@ -3,7 +3,8 @@ package com.asterexcrisys.adblocker.dispatchers;
 import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
 import com.asterexcrisys.adblocker.models.types.DispatchType;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
-import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.services.EvaluationManager;
+import com.asterexcrisys.adblocker.services.ResolutionManager;
 import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.tasks.HTTPHandler;
 import java.util.List;
@@ -18,8 +19,8 @@ public final class HTTPDispatcher implements Dispatcher {
     private final DefaultDispatcher dispatcher;
     private final boolean isSecure;
 
-    public HTTPDispatcher(ExecutorService executor, BlockingQueue<HTTPPacket> httpRequests, BlockingQueue<HTTPPacket> httpResponses, List<Future<?>> httpHandlers, ContextPool<ProxyManager> contextPool, int requestsLimit, int minimumTasks, int maximumTasks, boolean isSecure) {
-        Supplier<Runnable> task = () -> new HTTPHandler(contextPool, httpRequests, httpResponses);
+    public HTTPDispatcher(ExecutorService executor, EvaluationManager evaluationManager, ContextPool<ResolutionManager> contextPool, BlockingQueue<HTTPPacket> httpRequests, BlockingQueue<HTTPPacket> httpResponses, List<Future<?>> httpHandlers, int requestsLimit, int minimumTasks, int maximumTasks, boolean isSecure) {
+        Supplier<Runnable> task = () -> new HTTPHandler(evaluationManager, contextPool, httpRequests, httpResponses);
         dispatcher = new DefaultDispatcher(executor, httpRequests, httpHandlers, task, requestsLimit, minimumTasks, maximumTasks);
         this.isSecure = isSecure;
     }

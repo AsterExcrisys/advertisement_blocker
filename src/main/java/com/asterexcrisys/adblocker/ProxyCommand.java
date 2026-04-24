@@ -1,10 +1,13 @@
 package com.asterexcrisys.adblocker;
 
 import com.asterexcrisys.adblocker.filters.BlacklistFilter;
+import com.asterexcrisys.adblocker.filters.Filter;
 import com.asterexcrisys.adblocker.filters.WhitelistFilter;
 import com.asterexcrisys.adblocker.matchers.ExactMatcher;
+import com.asterexcrisys.adblocker.matchers.Matcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
-import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.services.EvaluationManager;
+import com.asterexcrisys.adblocker.services.ResolutionManager;
 import com.asterexcrisys.adblocker.services.TaskDispatcher;
 import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.tasks.*;
@@ -12,6 +15,7 @@ import com.asterexcrisys.adblocker.models.types.ProxyMode;
 import com.asterexcrisys.adblocker.models.packets.TCPPacket;
 import com.asterexcrisys.adblocker.models.packets.UDPPacket;
 import com.asterexcrisys.adblocker.utilities.CommandUtility;
+import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -23,6 +27,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import javax.net.ssl.*;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -108,18 +113,19 @@ public class ProxyCommand implements Callable<Integer> {
             throw new IllegalArgumentException("minimum tasks must not exceed maximum tasks");
         }
         GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
-        final int contextPoolSize = Math.min(
+        int contextPoolSize = Math.min(
                 Math.max(Math.floorDiv(maximumTasks, 5), 1),
                 Runtime.getRuntime().availableProcessors()
         );
-        final List<ProxyManager> contexts = new ArrayList<>(contextPoolSize);
+        EvaluationManager evaluationManager = initializeEvaluationManager();
+        List<ResolutionManager> contexts = new ArrayList<>(contextPoolSize);
         for (int i = 0; i < contextPoolSize; i++) {
-            contexts.add(initializeContext());
+            contexts.add(initializeResolutionManager());
         }
         try (
                 ExecutorService executor = initializeExecutor();
                 ScheduledExecutorService scheduler = initializeScheduler();
-                ContextPool<ProxyManager> contextPool = new ContextPool<>(contexts);
+                ContextPool<ResolutionManager> contextPool = new ContextPool<>(contexts);
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
                 ServerSocket tcpSocket = new ServerSocket(serverPort)
         ) {
@@ -147,14 +153,14 @@ public class ProxyCommand implements Callable<Integer> {
             }
             for (int i = 0; i < minimumTasks; i++) {
                 if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
-                    udpHandlers.add(executor.submit(new UDPHandler(contextPool, udpRequests, udpResponses)));
+                    udpHandlers.add(executor.submit(new UDPHandler(evaluationManager, contextPool, udpRequests, udpResponses)));
                 }
                 if (serverMode == ProxyMode.TCP || serverMode == ProxyMode.DEFAULT) {
-                    tcpHandlers.add(executor.submit(new TCPHandler(contextPool, tcpRequests, tcpResponses)));
+                    tcpHandlers.add(executor.submit(new TCPHandler(evaluationManager, contextPool, tcpRequests, tcpResponses)));
                 }
             }
             LOGGER.info("DNS Ad-Blocking Proxy with mode '{}' started on port {}", serverMode, serverPort);
-            TaskDispatcher dispatcher = new TaskDispatcher(executor, contextPool, requestsLimit, minimumTasks, maximumTasks);
+            TaskDispatcher dispatcher = new TaskDispatcher(executor, evaluationManager, contextPool, requestsLimit, minimumTasks, maximumTasks);
             dispatcher.addUDP(udpRequests, udpResponses, udpHandlers);
             dispatcher.addTCP(tcpRequests, tcpResponses, tcpHandlers, false);
             scheduler.scheduleWithFixedDelay(dispatcher, 10000, 10000, TimeUnit.MILLISECONDS);
@@ -221,13 +227,26 @@ public class ProxyCommand implements Callable<Integer> {
         return server;
     }
 
-    public ProxyManager initializeContext() throws Exception {
-        ProxyManager manager = new ProxyManager(shouldRetry);
-        manager.setFilter(isWhitelist? new WhitelistFilter():new BlacklistFilter());
-        manager.setFilterMatcher(isWildcard? new WildcardMatcher():new ExactMatcher());
-        manager.addResolvers(CommandUtility.parseNameServers(nameServers));
-        manager.addFilteredDomains(CommandUtility.parseFilteredDomains(filteredDomains));
+    public EvaluationManager initializeEvaluationManager() throws IOException {
+        List<String> domains = CommandUtility.parseFilteredDomains(filteredDomains);
+        Matcher matcher = GlobalUtility.switchReturn(isWildcard, () -> {
+            return new WildcardMatcher(domains);
+        }, () -> {
+            return new ExactMatcher(domains);
+        });
+        Filter filter = GlobalUtility.switchReturn(isWhitelist, () -> {
+            return new WhitelistFilter(matcher);
+        }, () -> {
+            return new BlacklistFilter(matcher);
+        });
+        EvaluationManager manager = new EvaluationManager(filter);
         manager.setCacheMaximumSize(cacheLimit);
+        return manager;
+    }
+
+    public ResolutionManager initializeResolutionManager() throws Exception {
+        ResolutionManager manager = new ResolutionManager(shouldRetry);
+        manager.addResolvers(CommandUtility.parseNameServers(nameServers));
         return manager;
     }
 

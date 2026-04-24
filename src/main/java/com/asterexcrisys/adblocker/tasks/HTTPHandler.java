@@ -1,7 +1,8 @@
 package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
-import com.asterexcrisys.adblocker.services.ProxyManager;
+import com.asterexcrisys.adblocker.services.EvaluationManager;
+import com.asterexcrisys.adblocker.services.ResolutionManager;
 import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import com.sun.net.httpserver.HttpExchange;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Message;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 @SuppressWarnings("unused")
@@ -16,11 +18,13 @@ public class HTTPHandler implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HTTPHandler.class);
 
-    private final ContextPool<ProxyManager> contextPool;
+    private final EvaluationManager evaluationManager;
+    private final ContextPool<ResolutionManager> contextPool;
     private final BlockingQueue<HTTPPacket> requests;
     private final BlockingQueue<HTTPPacket> responses;
 
-    public HTTPHandler(ContextPool<ProxyManager> contextPool, BlockingQueue<HTTPPacket> requests, BlockingQueue<HTTPPacket> responses) {
+    public HTTPHandler(EvaluationManager evaluationManager, ContextPool<ResolutionManager> contextPool, BlockingQueue<HTTPPacket> requests, BlockingQueue<HTTPPacket> responses) {
+        this.evaluationManager = Objects.requireNonNull(evaluationManager);
         this.contextPool = Objects.requireNonNull(contextPool);
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
@@ -33,9 +37,7 @@ public class HTTPHandler implements Runnable {
                 HTTPPacket requestPacket = requests.take();
                 HttpExchange exchange = requestPacket.transport();
                 Message request = new Message(requestPacket.data());
-                Message response = GlobalUtility.acquireAccess(contextPool, (context) -> {
-                    return context.handle(request);
-                });
+                Message response = process(request);
                 HTTPPacket responsePacket = HTTPPacket.of(
                         exchange,
                         response.toWire()
@@ -58,6 +60,16 @@ public class HTTPHandler implements Runnable {
             LOGGER.error("Failed to handle HTTP request: {}", exception.getMessage());
             Thread.currentThread().interrupt();
         }
+    }
+
+    private Message process(Message request) throws InterruptedException {
+        Optional<Message> response = evaluationManager.evaluate(request);
+        if (response.isPresent()) {
+            return response.get();
+        }
+        return GlobalUtility.acquireAccess(contextPool, (context) -> {
+            return context.resolve(request);
+        });
     }
 
 }

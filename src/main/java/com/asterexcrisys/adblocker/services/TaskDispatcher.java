@@ -27,7 +27,8 @@ public class TaskDispatcher implements Runnable {
 
     private final Map<ProxyMode, Dispatcher> dispatchers;
     private final ExecutorService executor;
-    private final ContextPool<ProxyManager> contextPool;
+    private final EvaluationManager evaluationManager;
+    private final ContextPool<ResolutionManager> contextPool;
     private final int requestsLimit;
     private final int minimumTasks;
     private final int maximumTasks;
@@ -36,6 +37,7 @@ public class TaskDispatcher implements Runnable {
     public TaskDispatcher() {
         dispatchers = new HashMap<>();
         executor = null;
+        evaluationManager = null;
         contextPool = null;
         requestsLimit = 0;
         minimumTasks = 0;
@@ -43,9 +45,10 @@ public class TaskDispatcher implements Runnable {
         hasFallback = false;
     }
 
-    public TaskDispatcher(ExecutorService executor, ContextPool<ProxyManager> contextPool, int requestsLimit, int minimumTasks, int maximumTasks) {
+    public TaskDispatcher(ExecutorService executor, EvaluationManager evaluationManager, ContextPool<ResolutionManager> contextPool, int requestsLimit, int minimumTasks, int maximumTasks) {
         dispatchers = new HashMap<>();
         this.executor = Objects.requireNonNull(executor);
+        this.evaluationManager = Objects.requireNonNull(evaluationManager);
         this.contextPool = Objects.requireNonNull(contextPool);
         this.requestsLimit = requestsLimit;
         this.minimumTasks = minimumTasks;
@@ -69,10 +72,11 @@ public class TaskDispatcher implements Runnable {
         }
         dispatchers.put(ProxyMode.UDP, new UDPDispatcher(
                 executor,
+                evaluationManager,
+                contextPool,
                 udpRequests,
                 udpResponses,
                 udpHandlers,
-                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks
@@ -88,10 +92,11 @@ public class TaskDispatcher implements Runnable {
         }
         dispatchers.put(isSecure? ProxyMode.TLS:ProxyMode.TCP, new TCPDispatcher(
                 executor,
+                evaluationManager,
+                contextPool,
                 tcpRequests,
                 tcpResponses,
                 tcpHandlers,
-                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks,
@@ -108,10 +113,11 @@ public class TaskDispatcher implements Runnable {
         }
         dispatchers.put(isSecure? ProxyMode.HTTPS:ProxyMode.HTTP, new HTTPDispatcher(
                 executor,
+                evaluationManager,
+                contextPool,
                 httpRequests,
                 httpResponses,
                 httpHandlers,
-                contextPool,
                 requestsLimit,
                 minimumTasks,
                 maximumTasks,

@@ -14,13 +14,11 @@ public class ExactMatchBlacklistFilterUnitTests {
 
     @BeforeAll
     public void setUp() {
-        filter = new BlacklistFilter();
-        filter.setMatcher(new ExactMatcher());
-        filter.load(List.of(
+        filter = new BlacklistFilter(new ExactMatcher(List.of(
                 "google.com", "youtube.com", "facebook.com",
                 "apple.com", "amazon.com", "microsoft.com",
                 "*.altervista.org", "*.net", "*.io"
-        ));
+        )));
     }
 
     @Test

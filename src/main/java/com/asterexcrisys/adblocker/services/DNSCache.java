@@ -11,12 +11,11 @@ public class DNSCache {
 
     public DNSCache() {
         cache = new Cache(DClass.IN);
-        cache.setMaxEntries(1000);
     }
 
     public DNSCache(int maximumSize) {
         if (maximumSize < 1) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("maximumSize must be a positive number");
         }
         cache = new Cache(DClass.IN);
         cache.setMaxEntries(maximumSize);
