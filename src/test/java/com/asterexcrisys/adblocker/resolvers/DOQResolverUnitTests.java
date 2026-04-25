@@ -32,7 +32,7 @@ public class DOQResolverUnitTests {
 
     //@Test
     public void shouldReturnNxDomainWhenValidNonExistentRequest() throws TextParseException {
-        Name name = Name.fromString("subdomain.example.com.", Name.root);
+        Name name = Name.fromString("not-cloudflare.com.", Name.root);
         Record question = Record.newRecord(name, Type.A, DClass.IN);
         Message request = Message.newQuery(question);
         Message response = resolver.resolve(request);

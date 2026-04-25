@@ -3,19 +3,22 @@ package com.asterexcrisys.adblocker.services.domains;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class DomainTrie {
 
-    private final DomainTrieNode root;
+    private final String prefix;
     private final String wildcard;
     private final String separator;
+    private final DomainTrieNode root;
 
     public DomainTrie(String prefix, String wildcard, String separator, Collection<String> domains) {
-        root = initialize(prefix, domains);
-        this.wildcard = wildcard;
-        this.separator = separator;
+        this.prefix = Objects.requireNonNull(prefix);
+        this.wildcard = Objects.requireNonNull(wildcard);
+        this.separator = Objects.requireNonNull(separator);
+        root = initialize(Objects.requireNonNull(domains));
     }
 
     public boolean contains(String domain) {
@@ -29,7 +32,7 @@ public class DomainTrie {
         return contains(root, parts, 0);
     }
 
-    private DomainTrieNode initialize(String prefix, Collection<String> domains) {
+    private DomainTrieNode initialize(Collection<String> domains) {
         DomainTrieNode root = DomainTrieNode.of(prefix, new HashMap<>());
         for (String domain : domains) {
             String[] parts = ignoreBlankParts(ignoreTriePrefix(domain));
@@ -64,8 +67,8 @@ public class DomainTrie {
     }
 
     private String ignoreTriePrefix(String domain) {
-        if (domain.startsWith(root.label())) {
-            return domain.substring(root.label().length());
+        if (domain.startsWith(prefix)) {
+            return domain.substring(prefix.length());
         }
         return domain;
     }
