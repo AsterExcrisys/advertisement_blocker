@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
-public final class CommandUtility {
+public final class CommandUtilities {
 
     private static final Pattern DOMAIN_PATTERN;
 
@@ -34,7 +34,7 @@ public final class CommandUtility {
                 nameServers.add(parseNameServer(line));
                 lines.add(line);
             }
-            return nameServers;
+            return List.copyOf(nameServers);
         }
     }
 
@@ -50,7 +50,7 @@ public final class CommandUtility {
                 filteredDomains.add(parseFilteredDomain(line));
                 lines.add(line);
             }
-            return filteredDomains;
+            return List.copyOf(filteredDomains);
         }
     }
 
@@ -139,7 +139,7 @@ public final class CommandUtility {
         if (!DOMAIN_PATTERN.matcher(address).matches()) {
             return address;
         }
-        return GlobalUtility.resolveDomainAddress(address, true);
+        return GlobalUtilities.resolveDomainAddress(address, true);
     }
 
 }

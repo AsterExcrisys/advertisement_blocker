@@ -7,10 +7,20 @@ public final class GlobalSettings {
 
     private static volatile GlobalSettings INSTANCE;
 
+    private final AtomicLong queueTimeout;
     private final AtomicLong requestTimeout;
 
     private GlobalSettings() {
+        queueTimeout = new AtomicLong(5000);
         requestTimeout = new AtomicLong(5000);
+    }
+
+    public long getQueueTimeout() {
+        return queueTimeout.get();
+    }
+
+    public void setQueueTimeout(long timeout) {
+        queueTimeout.set(timeout);
     }
 
     public long getRequestTimeout() {

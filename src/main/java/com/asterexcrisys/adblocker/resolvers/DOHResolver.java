@@ -1,7 +1,8 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.models.types.ResolverType;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import okhttp3.*;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
@@ -86,9 +87,14 @@ public final class DOHResolver implements Resolver {
     }
 
     @Override
+    public ResolverType type() {
+        return ResolverType.DOH;
+    }
+
+    @Override
     public Message resolve(Message request) {
-        if (!ResolverUtility.validateRequest(request)) {
-            return ResolverUtility.buildErrorResponse(
+        if (!ResolverUtilities.validateRequest(request)) {
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.FORMERR,
                     400,
@@ -96,7 +102,7 @@ public final class DOHResolver implements Resolver {
             );
         }
         try {
-            ResolverUtility.updatePayloadSize(request);
+            ResolverUtilities.updatePayloadSize(request);
             Request httpRequest;
             if (httpMethod == HTTPMethod.GET) {
                 httpRequest = buildGetRequest(request);
@@ -110,7 +116,7 @@ public final class DOHResolver implements Resolver {
                 return new Message(httpResponse.body().bytes());
             }
         } catch (Exception exception) {
-            return ResolverUtility.buildErrorResponse(
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     500,

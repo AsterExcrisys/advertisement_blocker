@@ -3,8 +3,6 @@ package com.asterexcrisys.adblocker.tasks;
 import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
 import com.asterexcrisys.adblocker.services.EvaluationManager;
 import com.asterexcrisys.adblocker.services.ResolutionManager;
-import com.asterexcrisys.adblocker.services.contexts.ContextPool;
-import com.asterexcrisys.adblocker.utilities.GlobalUtility;
 import com.sun.net.httpserver.HttpExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +17,13 @@ public class HTTPHandler implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(HTTPHandler.class);
 
     private final EvaluationManager evaluationManager;
-    private final ContextPool<ResolutionManager> contextPool;
+    private final ResolutionManager resolutionManager;
     private final BlockingQueue<HTTPPacket> requests;
     private final BlockingQueue<HTTPPacket> responses;
 
-    public HTTPHandler(EvaluationManager evaluationManager, ContextPool<ResolutionManager> contextPool, BlockingQueue<HTTPPacket> requests, BlockingQueue<HTTPPacket> responses) {
+    public HTTPHandler(EvaluationManager evaluationManager, ResolutionManager resolutionManager, BlockingQueue<HTTPPacket> requests, BlockingQueue<HTTPPacket> responses) {
         this.evaluationManager = Objects.requireNonNull(evaluationManager);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        this.resolutionManager = Objects.requireNonNull(resolutionManager);
         this.requests = Objects.requireNonNull(requests);
         this.responses = Objects.requireNonNull(responses);
     }
@@ -63,13 +61,13 @@ public class HTTPHandler implements Runnable {
     }
 
     private Message process(Message request) throws InterruptedException {
-        Optional<Message> response = evaluationManager.evaluate(request);
-        if (response.isPresent()) {
-            return response.get();
+        Optional<Message> optional = evaluationManager.evaluate(request);
+        if (optional.isPresent()) {
+            return optional.get();
         }
-        return GlobalUtility.acquireAccess(contextPool, (context) -> {
-            return context.resolve(request);
-        });
+        Message response = resolutionManager.resolve(request);
+        evaluationManager.update(response);
+        return response;
     }
 
 }

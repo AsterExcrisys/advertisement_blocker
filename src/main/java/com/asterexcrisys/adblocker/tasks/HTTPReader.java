@@ -2,7 +2,7 @@ package com.asterexcrisys.adblocker.tasks;
 
 import com.asterexcrisys.adblocker.models.packets.HTTPPacket;
 import com.asterexcrisys.adblocker.models.types.HTTPMethod;
-import com.asterexcrisys.adblocker.utilities.GlobalUtility;
+import com.asterexcrisys.adblocker.utilities.GlobalUtilities;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public class HTTPReader extends Thread {
     }
 
     private Optional<byte[]> parseRequest(HttpExchange exchange) throws IOException {
-        HTTPMethod method = GlobalUtility.tryOrDefault(() -> {
+        HTTPMethod method = GlobalUtilities.tryOrDefault(() -> {
             return HTTPMethod.valueOf(exchange.getRequestMethod().toUpperCase());
         }, null);
         if (method == null) {
@@ -89,7 +89,7 @@ public class HTTPReader extends Thread {
                 if (contentType == null || !contentType.equalsIgnoreCase("application/dns-message")) {
                     yield Optional.empty();
                 }
-                int contentLength = GlobalUtility.tryOrDefault(() -> {
+                int contentLength = GlobalUtilities.tryOrDefault(() -> {
                     return Integer.parseInt(exchange.getRequestHeaders().getFirst("Content-Length"));
                 }, 0);
                 Optional<byte[]> request = parseBody(exchange.getRequestBody(), 65536);

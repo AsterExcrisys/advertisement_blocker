@@ -1,7 +1,8 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.models.types.DNSProtocol;
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.models.types.ResolverType;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.dnssec.ValidatingResolver;
@@ -52,9 +53,14 @@ public final class SECResolver implements Resolver {
     }
 
     @Override
+    public ResolverType type() {
+        return ResolverType.SEC;
+    }
+
+    @Override
     public Message resolve(Message request) {
-        if (!ResolverUtility.validateRequest(request)) {
-            return ResolverUtility.buildErrorResponse(
+        if (!ResolverUtilities.validateRequest(request)) {
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.FORMERR,
                     400,
@@ -89,7 +95,7 @@ public final class SECResolver implements Resolver {
             }
             return response;
         } catch (Exception exception) {
-            return ResolverUtility.buildErrorResponse(
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     500,

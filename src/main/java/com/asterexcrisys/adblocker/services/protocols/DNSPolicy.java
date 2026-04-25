@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.services;
+package com.asterexcrisys.adblocker.services.protocols;
 
 import com.asterexcrisys.adblocker.filters.BlacklistFilter;
 import com.asterexcrisys.adblocker.filters.Filter;

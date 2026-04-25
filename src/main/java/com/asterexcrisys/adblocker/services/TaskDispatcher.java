@@ -9,7 +9,6 @@ import com.asterexcrisys.adblocker.models.packets.TCPPacket;
 import com.asterexcrisys.adblocker.models.packets.UDPPacket;
 import com.asterexcrisys.adblocker.models.types.DispatchType;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
-import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public class TaskDispatcher implements Runnable {
     private final Map<ProxyMode, Dispatcher> dispatchers;
     private final ExecutorService executor;
     private final EvaluationManager evaluationManager;
-    private final ContextPool<ResolutionManager> contextPool;
+    private final ResolutionManager resolutionManager;
     private final int requestsLimit;
     private final int minimumTasks;
     private final int maximumTasks;
@@ -38,18 +37,18 @@ public class TaskDispatcher implements Runnable {
         dispatchers = new HashMap<>();
         executor = null;
         evaluationManager = null;
-        contextPool = null;
+        resolutionManager = null;
         requestsLimit = 0;
         minimumTasks = 0;
         maximumTasks = 0;
         hasFallback = false;
     }
 
-    public TaskDispatcher(ExecutorService executor, EvaluationManager evaluationManager, ContextPool<ResolutionManager> contextPool, int requestsLimit, int minimumTasks, int maximumTasks) {
+    public TaskDispatcher(ExecutorService executor, EvaluationManager evaluationManager, ResolutionManager resolutionManager, int requestsLimit, int minimumTasks, int maximumTasks) {
         dispatchers = new HashMap<>();
         this.executor = Objects.requireNonNull(executor);
         this.evaluationManager = Objects.requireNonNull(evaluationManager);
-        this.contextPool = Objects.requireNonNull(contextPool);
+        this.resolutionManager = Objects.requireNonNull(resolutionManager);
         this.requestsLimit = requestsLimit;
         this.minimumTasks = minimumTasks;
         this.maximumTasks = maximumTasks;
@@ -73,7 +72,7 @@ public class TaskDispatcher implements Runnable {
         dispatchers.put(ProxyMode.UDP, new UDPDispatcher(
                 executor,
                 evaluationManager,
-                contextPool,
+                resolutionManager,
                 udpRequests,
                 udpResponses,
                 udpHandlers,
@@ -93,7 +92,7 @@ public class TaskDispatcher implements Runnable {
         dispatchers.put(isSecure? ProxyMode.TLS:ProxyMode.TCP, new TCPDispatcher(
                 executor,
                 evaluationManager,
-                contextPool,
+                resolutionManager,
                 tcpRequests,
                 tcpResponses,
                 tcpHandlers,
@@ -114,7 +113,7 @@ public class TaskDispatcher implements Runnable {
         dispatchers.put(isSecure? ProxyMode.HTTPS:ProxyMode.HTTP, new HTTPDispatcher(
                 executor,
                 evaluationManager,
-                contextPool,
+                resolutionManager,
                 httpRequests,
                 httpResponses,
                 httpHandlers,

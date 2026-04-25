@@ -19,13 +19,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
-public final class GlobalUtility {
+public final class GlobalUtilities {
 
-    private static final GlobalSettings SETTINGS;
-
-    static {
-        SETTINGS = GlobalSettings.getInstance();
-    }
+    private static final GlobalSettings SETTINGS = GlobalSettings.getInstance();
 
     public static <T> List<T> fillList(Supplier<T> supplier, int size) {
         List<T> list = new ArrayList<>(size);
@@ -72,7 +68,7 @@ public final class GlobalUtility {
         Message request = Message.newQuery(question);
         try (Resolver resolver = new STDResolver("1.1.1.2")) {
             Message response = resolver.resolve(request);
-            if (!ResolverUtility.validateResponse(response)) {
+            if (!ResolverUtilities.validateResponse(response)) {
                 throw new IllegalArgumentException("response must have a header, question, and answer(s) field to be considered valid");
             }
             long maximumTTL = -1;

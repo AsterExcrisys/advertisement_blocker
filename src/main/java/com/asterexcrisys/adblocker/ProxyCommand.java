@@ -6,16 +6,16 @@ import com.asterexcrisys.adblocker.filters.WhitelistFilter;
 import com.asterexcrisys.adblocker.matchers.ExactMatcher;
 import com.asterexcrisys.adblocker.matchers.Matcher;
 import com.asterexcrisys.adblocker.matchers.WildcardMatcher;
+import com.asterexcrisys.adblocker.resolvers.Resolver;
 import com.asterexcrisys.adblocker.services.EvaluationManager;
 import com.asterexcrisys.adblocker.services.ResolutionManager;
 import com.asterexcrisys.adblocker.services.TaskDispatcher;
-import com.asterexcrisys.adblocker.services.contexts.ContextPool;
 import com.asterexcrisys.adblocker.tasks.*;
 import com.asterexcrisys.adblocker.models.types.ProxyMode;
 import com.asterexcrisys.adblocker.models.packets.TCPPacket;
 import com.asterexcrisys.adblocker.models.packets.UDPPacket;
-import com.asterexcrisys.adblocker.utilities.CommandUtility;
-import com.asterexcrisys.adblocker.utilities.GlobalUtility;
+import com.asterexcrisys.adblocker.utilities.CommandUtilities;
+import com.asterexcrisys.adblocker.utilities.GlobalUtilities;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -65,6 +65,9 @@ public class ProxyCommand implements Callable<Integer> {
     @Option(names = {"-wc", "--is-wildcard"}, description = "The flag to signal the proxy whether it should use an exact or a wildcard matcher (optional).", defaultValue = "false")
     private boolean isWildcard;
 
+    @Option(names = {"-qt", "--queue-timeout"}, description = "The timeout in milliseconds for each incoming packet in the queue (if it does expire, another poll is attempted) (optional).", defaultValue = "5000")
+    private int queueTimeout;
+
     @Option(names = {"-cl", "--cache-limit"}, description = "The cache limit of the proxy for DNS responses (optional).", defaultValue = "1000")
     private int cacheLimit;
 
@@ -73,6 +76,9 @@ public class ProxyCommand implements Callable<Integer> {
 
     @Option(names = {"-rl", "--requests-limit"}, description = "The requests limit per handler task (how many they should handle at maximum) (optional).", defaultValue = "100")
     private int requestsLimit;
+
+    @Option(names = {"-cr", "--concurrent-requests"}, description = "The maximum number of concurrent requests that can exists at any given time (optional).", defaultValue = "10")
+    private int concurrentRequests;
 
     @Option(names = {"-mnt", "--minimum-tasks"}, description = "The minimum number of handler tasks that exists at any given time (optional).", defaultValue = "5")
     private int minimumTasks;
@@ -94,6 +100,9 @@ public class ProxyCommand implements Callable<Integer> {
         if (serverPort < 1 || serverPort > 65535) {
             throw new IllegalArgumentException("server port must be in the range [1, 65535]");
         }
+        if (queueTimeout < 1000 || queueTimeout > 10000) {
+            throw new IllegalArgumentException("requests limit must be in the range [1000, 10000]");
+        }
         if (cacheLimit < 0 || cacheLimit > 10000) {
             throw new IllegalArgumentException("cache limit must be in the range [0, 10000]");
         }
@@ -102,6 +111,9 @@ public class ProxyCommand implements Callable<Integer> {
         }
         if (requestsLimit < 1 || requestsLimit > 1000) {
             throw new IllegalArgumentException("requests limit must be in the range [1, 1000]");
+        }
+        if (concurrentRequests < 1 || concurrentRequests > 100) {
+            throw new IllegalArgumentException("concurrent requests must be in the range [1, 100]");
         }
         if (minimumTasks < 1 || minimumTasks > 1000) {
             throw new IllegalArgumentException("minimum tasks must be in the range [1, 1000]");
@@ -112,20 +124,14 @@ public class ProxyCommand implements Callable<Integer> {
         if (minimumTasks > maximumTasks) {
             throw new IllegalArgumentException("minimum tasks must not exceed maximum tasks");
         }
-        GlobalSettings.getInstance().setRequestTimeout(requestTimeout);
-        int contextPoolSize = Math.min(
-                Math.max(Math.floorDiv(maximumTasks, 5), 1),
-                Runtime.getRuntime().availableProcessors()
-        );
+        GlobalSettings settings = GlobalSettings.getInstance();
+        settings.setQueueTimeout(queueTimeout);
+        settings.setRequestTimeout(requestTimeout);
         EvaluationManager evaluationManager = initializeEvaluationManager();
-        List<ResolutionManager> contexts = new ArrayList<>(contextPoolSize);
-        for (int i = 0; i < contextPoolSize; i++) {
-            contexts.add(initializeResolutionManager());
-        }
+        ResolutionManager resolutionManager = initializeResolutionManager();
         try (
                 ExecutorService executor = initializeExecutor();
                 ScheduledExecutorService scheduler = initializeScheduler();
-                ContextPool<ResolutionManager> contextPool = new ContextPool<>(contexts);
                 DatagramSocket udpSocket = new DatagramSocket(serverPort);
                 ServerSocket tcpSocket = new ServerSocket(serverPort)
         ) {
@@ -153,14 +159,14 @@ public class ProxyCommand implements Callable<Integer> {
             }
             for (int i = 0; i < minimumTasks; i++) {
                 if (serverMode == ProxyMode.UDP || serverMode == ProxyMode.DEFAULT) {
-                    udpHandlers.add(executor.submit(new UDPHandler(evaluationManager, contextPool, udpRequests, udpResponses)));
+                    udpHandlers.add(executor.submit(new UDPHandler(evaluationManager, resolutionManager, udpRequests, udpResponses)));
                 }
                 if (serverMode == ProxyMode.TCP || serverMode == ProxyMode.DEFAULT) {
-                    tcpHandlers.add(executor.submit(new TCPHandler(evaluationManager, contextPool, tcpRequests, tcpResponses)));
+                    tcpHandlers.add(executor.submit(new TCPHandler(evaluationManager, resolutionManager, tcpRequests, tcpResponses)));
                 }
             }
             LOGGER.info("DNS Ad-Blocking Proxy with mode '{}' started on port {}", serverMode, serverPort);
-            TaskDispatcher dispatcher = new TaskDispatcher(executor, evaluationManager, contextPool, requestsLimit, minimumTasks, maximumTasks);
+            TaskDispatcher dispatcher = new TaskDispatcher(executor, evaluationManager, resolutionManager, requestsLimit, minimumTasks, maximumTasks);
             dispatcher.addUDP(udpRequests, udpResponses, udpHandlers);
             dispatcher.addTCP(tcpRequests, tcpResponses, tcpHandlers, false);
             scheduler.scheduleWithFixedDelay(dispatcher, 10000, 10000, TimeUnit.MILLISECONDS);
@@ -228,13 +234,13 @@ public class ProxyCommand implements Callable<Integer> {
     }
 
     public EvaluationManager initializeEvaluationManager() throws IOException {
-        List<String> domains = CommandUtility.parseFilteredDomains(filteredDomains);
-        Matcher matcher = GlobalUtility.switchReturn(isWildcard, () -> {
+        List<String> domains = CommandUtilities.parseFilteredDomains(filteredDomains);
+        Matcher matcher = GlobalUtilities.switchReturn(isWildcard, () -> {
             return new WildcardMatcher(domains);
         }, () -> {
             return new ExactMatcher(domains);
         });
-        Filter filter = GlobalUtility.switchReturn(isWhitelist, () -> {
+        Filter filter = GlobalUtilities.switchReturn(isWhitelist, () -> {
             return new WhitelistFilter(matcher);
         }, () -> {
             return new BlacklistFilter(matcher);
@@ -245,9 +251,8 @@ public class ProxyCommand implements Callable<Integer> {
     }
 
     public ResolutionManager initializeResolutionManager() throws Exception {
-        ResolutionManager manager = new ResolutionManager(shouldRetry);
-        manager.addResolvers(CommandUtility.parseNameServers(nameServers));
-        return manager;
+        List<Resolver> resolvers = CommandUtilities.parseNameServers(nameServers);
+        return new ResolutionManager(shouldRetry, concurrentRequests, resolvers);
     }
 
 }

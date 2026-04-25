@@ -3,7 +3,9 @@ package com.asterexcrisys.adblocker.services;
 import com.asterexcrisys.adblocker.filters.Filter;
 import com.asterexcrisys.adblocker.models.types.FilterMode;
 import com.asterexcrisys.adblocker.models.types.MatcherMode;
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.services.protocols.DNSCache;
+import com.asterexcrisys.adblocker.services.protocols.DNSPolicy;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import java.util.Optional;
@@ -41,7 +43,7 @@ public class EvaluationManager {
 
     public Optional<Message> evaluate(Message request) {
         if (!policy.isValid(request)) {
-            return Optional.of(ResolverUtility.buildErrorResponse(
+            return Optional.of(ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.REFUSED,
                     300,
@@ -49,6 +51,10 @@ public class EvaluationManager {
             ));
         }
         return cache.get(request);
+    }
+
+    public void update(Message response) {
+        cache.put(response);
     }
 
 }

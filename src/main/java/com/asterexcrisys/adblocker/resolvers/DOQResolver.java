@@ -1,6 +1,7 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.models.types.ResolverType;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import tech.kwik.core.QuicClientConnection;
@@ -27,9 +28,14 @@ public record DOQResolver(String nameServer, int serverPort) implements Resolver
     }
 
     @Override
+    public ResolverType type() {
+        return ResolverType.DOQ;
+    }
+
+    @Override
     public Message resolve(Message request) {
-        if (!ResolverUtility.validateRequest(request)) {
-            return ResolverUtility.buildErrorResponse(
+        if (!ResolverUtilities.validateRequest(request)) {
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.FORMERR,
                     400,
@@ -51,13 +57,13 @@ public record DOQResolver(String nameServer, int serverPort) implements Resolver
             QuicStream stream = connection.createStream(true);
             OutputStream output = stream.getOutputStream();
             InputStream input = stream.getInputStream();
-            ResolverUtility.updatePayloadSize(request);
+            ResolverUtilities.updatePayloadSize(request);
             output.write(request.toWire());
             output.flush();
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
         } catch (Exception exception) {
-            return ResolverUtility.buildErrorResponse(
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     500,

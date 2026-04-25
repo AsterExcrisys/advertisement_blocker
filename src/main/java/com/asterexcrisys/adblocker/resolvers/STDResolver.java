@@ -1,7 +1,8 @@
 package com.asterexcrisys.adblocker.resolvers;
 
 import com.asterexcrisys.adblocker.models.types.DNSProtocol;
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.models.types.ResolverType;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import org.xbill.DNS.*;
 import java.time.Duration;
 import java.util.Collections;
@@ -20,9 +21,14 @@ public record STDResolver(String nameServer, DNSProtocol dnsProtocol) implements
     }
 
     @Override
+    public ResolverType type() {
+        return ResolverType.STD;
+    }
+
+    @Override
     public Message resolve(Message request) {
-        if (!ResolverUtility.validateRequest(request)) {
-            return ResolverUtility.buildErrorResponse(
+        if (!ResolverUtilities.validateRequest(request)) {
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.FORMERR,
                     400,
@@ -47,7 +53,7 @@ public record STDResolver(String nameServer, DNSProtocol dnsProtocol) implements
             }
             return resolver.send(request);
         } catch (Exception exception) {
-            return ResolverUtility.buildErrorResponse(
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     500,

@@ -1,6 +1,7 @@
 package com.asterexcrisys.adblocker.resolvers;
 
-import com.asterexcrisys.adblocker.utilities.ResolverUtility;
+import com.asterexcrisys.adblocker.models.types.ResolverType;
+import com.asterexcrisys.adblocker.utilities.ResolverUtilities;
 import org.xbill.DNS.Message;
 import org.xbill.DNS.Rcode;
 import javax.net.ssl.SSLSocketFactory;
@@ -37,9 +38,14 @@ public final class DOTResolver implements Resolver {
     }
 
     @Override
+    public ResolverType type() {
+        return ResolverType.DOT;
+    }
+
+    @Override
     public Message resolve(Message request) {
-        if (!ResolverUtility.validateRequest(request)) {
-            return ResolverUtility.buildErrorResponse(
+        if (!ResolverUtilities.validateRequest(request)) {
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.FORMERR,
                     400,
@@ -50,7 +56,7 @@ public final class DOTResolver implements Resolver {
             socket.setSoTimeout(5000);
             OutputStream output = socket.getOutputStream();
             InputStream input = socket.getInputStream();
-            ResolverUtility.updatePayloadSize(request);
+            ResolverUtilities.updatePayloadSize(request);
             byte[] data = request.toWire();
             output.write((data.length >> 8) & 0xFF);
             output.write(data.length & 0xFF);
@@ -59,7 +65,7 @@ public final class DOTResolver implements Resolver {
             int length = (input.read() << 8) | input.read();
             return new Message(input.readNBytes(length));
         } catch (Exception exception) {
-            return ResolverUtility.buildErrorResponse(
+            return ResolverUtilities.buildErrorResponse(
                     request,
                     Rcode.SERVFAIL,
                     500,

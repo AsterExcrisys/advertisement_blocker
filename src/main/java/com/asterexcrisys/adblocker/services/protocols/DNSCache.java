@@ -1,4 +1,4 @@
-package com.asterexcrisys.adblocker.services;
+package com.asterexcrisys.adblocker.services.protocols;
 
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;

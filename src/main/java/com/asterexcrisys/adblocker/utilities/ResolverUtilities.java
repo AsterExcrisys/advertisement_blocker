@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 @SuppressWarnings("unused")
-public final class ResolverUtility {
+public final class ResolverUtilities {
 
     public static boolean validateRequest(Message request) {
         if (request == null) {
