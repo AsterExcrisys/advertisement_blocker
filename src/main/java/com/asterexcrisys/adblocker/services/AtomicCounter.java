@@ -2,6 +2,7 @@ package com.asterexcrisys.adblocker.services;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 public class AtomicCounter {
 
     private final AtomicInteger counter;
@@ -17,13 +18,26 @@ public class AtomicCounter {
         this.end = end;
     }
 
-    public int count() {
+    public int countup() {
         return counter.updateAndGet((value) -> {
             if (value >= end) {
                 return start;
             }
             return value + 1;
         });
+    }
+
+    public int countdown() {
+        return counter.updateAndGet((value) -> {
+            if (value <= start) {
+                return end;
+            }
+            return value - 1;
+        });
+    }
+
+    public void reset() {
+        counter.set(start);
     }
 
 }

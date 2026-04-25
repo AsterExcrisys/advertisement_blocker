@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-record DomainTrieNode(String label, Map<String, DomainTrieNode> children) implements Comparable<DomainTrieNode> {
+public record DomainTrieNode(String label, Map<String, DomainTrieNode> children) implements Comparable<DomainTrieNode> {
 
     public DomainTrieNode {
         Objects.requireNonNull(label);
@@ -17,7 +17,11 @@ record DomainTrieNode(String label, Map<String, DomainTrieNode> children) implem
     }
 
     public static DomainTrieNode of(String label, Map<String, DomainTrieNode> children) {
-        return new DomainTrieNode(label, children);
+        return new DomainTrieNode(label, Map.copyOf(children));
+    }
+
+    public static DomainTrieNode empty(String label) {
+        return new DomainTrieNode(label, Map.of());
     }
 
 }
