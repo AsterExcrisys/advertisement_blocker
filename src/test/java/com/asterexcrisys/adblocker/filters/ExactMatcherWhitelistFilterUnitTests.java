@@ -8,13 +8,13 @@ import org.junit.jupiter.api.TestInstance;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ExactMatchBlacklistFilterUnitTests {
+public class ExactMatcherWhitelistFilterUnitTests {
 
     private Filter filter;
 
     @BeforeAll
     public void setUp() {
-        filter = new BlacklistFilter(new ExactMatcher(List.of(
+        filter = new WhitelistFilter(new ExactMatcher(List.of(
                 "google.com", "youtube.com", "facebook.com",
                 "apple.com", "amazon.com", "microsoft.com",
                 "*.altervista.org", "*.net", "*.io"
@@ -22,13 +22,13 @@ public class ExactMatchBlacklistFilterUnitTests {
     }
 
     @Test
-    public void shouldReturnTrueWhenNotInBlacklist() {
-        Assertions.assertTrue(filter.isAllowed("cloudflare.com"));
+    public void shouldReturnFalseWhenNotInWhitelist() {
+        Assertions.assertFalse(filter.isAllowed("cloudflare.com"));
     }
 
     @Test
-    public void shouldReturnFalseWhenInBlacklist() {
-        Assertions.assertFalse(filter.isAllowed("google.com"));
+    public void shouldReturnTrueWhenInWhitelist() {
+        Assertions.assertTrue(filter.isAllowed("google.com"));
     }
 
     @Test

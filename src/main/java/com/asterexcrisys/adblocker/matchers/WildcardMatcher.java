@@ -9,7 +9,7 @@ public final class WildcardMatcher implements Matcher {
     private final DomainTrie list;
 
     public WildcardMatcher(Collection<String> domains) {
-        list = new DomainTrie("www", "*", "//.", domains);
+        list = new DomainTrie("www", "*", "\\.", domains);
     }
 
     @Override

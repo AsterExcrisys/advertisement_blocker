@@ -8,7 +8,7 @@ import org.junit.jupiter.api.TestInstance;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class WildcardMatchBlacklistFilterUnitTests {
+public class WildcardMatcherBlacklistFilterUnitTests {
 
     private Filter filter;
 

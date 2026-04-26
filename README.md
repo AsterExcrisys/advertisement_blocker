@@ -56,20 +56,22 @@ java -jar advertisement_blocker.jar ./path/to/name/servers.txt ./path/to/filtere
 
 ### Configuration Options
 
-| **Index/Option**           | **Name(s)**       | **Description**                                                                       | **Default** |
-|----------------------------|-------------------|---------------------------------------------------------------------------------------|-------------|
-| `0`                        | *nameServers*     | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
-| `1`                        | *filteredDomains* | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
-| `-sm`, `--server-mode`     | *serverMode*      | The mode of the server to use for receiving requests.                                 | `UDP`       |
-| `-sp`, `--server-port`     | *serverPort*      | The port on which the server will listen for requests.                                | `53`        |
-| `-sr`, `--should-retry`    | *shouldRetry*     | Flag to indicate if the proxy should use a retry mechanism with failed requests.      | `false`     |
-| `-wl`, `--is-whitelist`    | *isWhitelist*     | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
-| `-wc`, `--is-wildcard`     | *isWildcard*      | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
-| `-cl`, `--cache-limit`     | *cacheLimit*      | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
-| `-rt`, `--request-timeout` | *requestTimeout*  | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
-| `-rl`, `--requests-limit`  | *requestsLimit*   | Maximum number of requests each handler task should process.                          | `100`       |
-| `-mnt`, `--minimum-tasks`  | *minimumTasks*    | Minimum number of handler tasks maintained at all times.                              | `5`         |
-| `-mxt`, `--maximum-tasks`  | *maximumTasks*    | Maximum number of handler tasks that can exist.                                       | `10`        |
+| **Index/Option**               | **Name(s)**          | **Description**                                                                       | **Default** |
+|--------------------------------|----------------------|---------------------------------------------------------------------------------------|-------------|
+| `0`                            | *nameServers*        | The path to the file containing a list of DNS name servers (resolvers), one per line. | *Required*  |
+| `1`                            | *filteredDomains*    | The path to the file containing a list of filtered domains, one per line.             | *Required*  |
+| `-sm`, `--server-mode`         | *serverMode*         | The mode of the server to use for receiving requests.                                 | `UDP`       |
+| `-sp`, `--server-port`         | *serverPort*         | The port on which the server will listen for requests.                                | `53`        |
+| `-sr`, `--should-retry`        | *shouldRetry*        | Flag to indicate if the proxy should use a retry mechanism with failed requests.      | `false`     |
+| `-wl`, `--is-whitelist`        | *isWhitelist*        | Flag to indicate if the proxy should use a **whitelist** (instead of blacklist).      | `false`     |
+| `-wc`, `--is-wildcard`         | *isWildcard*         | Flag to indicate if the proxy should use **wildcard** matching.                       | `false`     |
+| `-qt`, `--queue-timeout`       | *queueTimeout*       | Timeout for each incoming packet to gain access to its consumer (milliseconds).       | `5000`      |
+| `-cl`, `--cache-limit`         | *cacheLimit*         | Maximum number of DNS responses stored in the cache.                                  | `1000`      |
+| `-rt`, `--request-timeout`     | *requestTimeout*     | Timeout for each incoming request to gain access to its resolver (milliseconds).      | `5000`      |
+| `-rl`, `--requests-limit`      | *requestsLimit*      | Maximum number of requests each handler task should process.                          | `100`       |
+| `-cr`, `--concurrent-requests` | *concurrentRequests* | Maximum number of concurrent requests that can exist.                                 | `10`        |
+| `-mnt`, `--minimum-tasks`      | *minimumTasks*       | Minimum number of handler tasks maintained at all times.                              | `5`         |
+| `-mxt`, `--maximum-tasks`      | *maximumTasks*       | Maximum number of handler tasks that can exist.                                       | `10`        |
 
 ## 📄 Supported Resolver Types
 

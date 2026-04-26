@@ -2,20 +2,23 @@ package com.asterexcrisys.adblocker.services.domains;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class DomainTrie {
 
-    private final DomainTrieNode root;
+    private final String prefix;
     private final String wildcard;
     private final String separator;
+    private final DomainTrieNode root;
 
     public DomainTrie(String prefix, String wildcard, String separator, Collection<String> domains) {
-        root = DomainTrieNode.of(prefix, new HashMap<>());
-        this.wildcard = wildcard;
-        this.separator = separator;
-        initialize(domains);
+        this.prefix = Objects.requireNonNull(prefix);
+        this.wildcard = Objects.requireNonNull(wildcard);
+        this.separator = Objects.requireNonNull(separator);
+        root = initialize(Objects.requireNonNull(domains));
     }
 
     public boolean contains(String domain) {
@@ -29,15 +32,25 @@ public class DomainTrie {
         return contains(root, parts, 0);
     }
 
-    private void initialize(Collection<String> domains) {
+    private DomainTrieNode initialize(Collection<String> domains) {
+        DomainTrieNode root = DomainTrieNode.of(prefix, new HashMap<>());
         for (String domain : domains) {
             String[] parts = ignoreBlankParts(ignoreTriePrefix(domain));
-            DomainTrieNode current = root;
-            for (String part : parts) {
-                current.children().putIfAbsent(part, DomainTrieNode.of(part, new HashMap<>()));
-                current = current.children().get(part);
-            }
+            root = initialize(root, parts, 0);
         }
+        return root;
+    }
+
+    private DomainTrieNode initialize(DomainTrieNode current, String[] parts, int index) {
+        if (index == parts.length) {
+            return current;
+        }
+        String part = parts[index];
+        DomainTrieNode child = current.children().getOrDefault(part, DomainTrieNode.empty(part));
+        DomainTrieNode updatedChild = initialize(child, parts, index + 1);
+        Map<String, DomainTrieNode> newChildren = new HashMap<>(current.children());
+        newChildren.put(part, updatedChild);
+        return DomainTrieNode.of(current.label(), newChildren);
     }
 
     private boolean contains(DomainTrieNode current, String[] parts, int index) {
@@ -54,8 +67,8 @@ public class DomainTrie {
     }
 
     private String ignoreTriePrefix(String domain) {
-        if (domain.startsWith(root.label())) {
-            return domain.substring(root.label().length());
+        if (domain.startsWith(prefix)) {
+            return domain.substring(prefix.length());
         }
         return domain;
     }
