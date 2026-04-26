@@ -9,9 +9,10 @@ public class Application {
 
     public static void main(String[] arguments) {
         CommandLine command = new CommandLine(new ProxyCommand());
-        command.setParameterExceptionHandler(new ExceptionHandler());
-        command.setExecutionExceptionHandler(new ExceptionHandler());
-        Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
+        ExceptionHandler handler = new ExceptionHandler();
+        command.setParameterExceptionHandler(handler);
+        command.setExecutionExceptionHandler(handler);
+        Thread.setDefaultUncaughtExceptionHandler(handler);
         System.exit(command.execute(arguments));
     }
 
